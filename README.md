@@ -1,8 +1,6 @@
 # Semantic Segmentation
----
 
 ## Image Reader
----
 Python program that reads images in the given folder. The program looks for one argument -- the file path to the folder containing the images to be read. 
 
 The program errors if it finds an invalid image format within the folder and if the folder path is not valid.
