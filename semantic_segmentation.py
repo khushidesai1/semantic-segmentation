@@ -3,8 +3,9 @@ import sys
 import os
 import copy
 import argparse
+import cv2
 					
-def read_images(img_path=None, folder_path=None, vid_path=None):
+def read_images(img_path=None, folder_path=None, vid_path=None, frame_rate=0.5):
 	"""
 	Reads the given image, images in the given folder, or image frames from the given video
 	and outputs them in the form of an image object or a list of image objects.
@@ -17,10 +18,13 @@ def read_images(img_path=None, folder_path=None, vid_path=None):
 		The path to the given folder
 	vid_path: str, optional
 		The path to the given video
+	frame_rate: double
+		The desired frame rate to conver the video to frame images
 	
 	Returns
 	-------
 	list of Image objects or Image object
+
 	"""
 	if img_path:
 		img = validate_img(img_path)
@@ -34,8 +38,54 @@ def read_images(img_path=None, folder_path=None, vid_path=None):
 		print("Completed reading images from folder:", folder_path)
 		return img_list
 	if vid_path:
-		# process video into frames
-		pass
+		convert_vid(vid_path, frame_rate)
+
+def convert_vid(vid_path, frame_rate):
+	"""
+	Converts a video into image frames and saves it to the current directory in the folder 
+	./[video file path]-frames/
+
+	Parameters
+	----------
+	vid_path: str
+		The path to the video file to be converted
+	frame_rate: double
+		The desired frame rate when capturing pictures from the video
+	
+	"""
+	vidcap = cv2.VideoCapture(vid_path)
+	sec = 0
+	success = get_frame(vidcap, sec, vid_path)
+	while success:
+		sec = round(sec + frame_rate, 2)
+		success = get_frame(vidcap, sec, vid_path)
+
+def get_frame(vidcap, sec, vid_path):
+	"""
+	Gets a single frame using the VideoCapture object and saves the frame image to the
+	folder ./[video file path]-frames/
+
+	Parameters
+	----------
+	vidcap: VideoCapture object
+		The VideoCapture object read from the video file path
+	sec: double
+		The second value of the video to capture
+	vid_path: str
+		The video file path
+
+	Returns
+	-------
+	boolean
+		True if the function was able to save the frame image to the folder
+		and False otherwise
+
+	"""
+	vidcap.set(cv2.CAP_PROP_POS_MSEC, sec * 1000)
+	hasFrames, img = vidcap.read()
+	if hasFrames:
+		cv2.imwrite("./frames/image" + str(sec) + ".jpg", img)
+	return hasFrames
 
 def validate_img(file_path):
 	"""
@@ -50,6 +100,7 @@ def validate_img(file_path):
 	-------
 	Image object
 		The Image object from the file path
+	
 	"""
 	try:
 		img = Image.open(file_path)
@@ -71,6 +122,7 @@ def validate_folder(folder_path):
 	-------
 	list of str
 		The list of strs representing each image file from the images within the folder path
+	
 	"""
 	try:
 		img_paths = os.listdir(folder_path)
@@ -91,6 +143,7 @@ def validate_video(video_path):
 	-------
 	Video object
 		The video file as a Video object
+	
 	"""
 	pass
 
@@ -105,14 +158,16 @@ def build_parser():
 	-------
 	ArgumentParser
 		The parser object containing all the specified configurations
+	
 	"""
 	parser = argparse.ArgumentParser(
 	description="Process images using trained semantic segmentation model.",
-	usage="semantic_segmentation.py [ -i | -v | -f ] [ image path I | video path V | folder path F ]")
+	usage="semantic_segmentation.py [ --img | --vid | --fldr ] [ image path I | video path V | folder path F ]")
 	flag_group = parser.add_mutually_exclusive_group(required=True)
-	flag_group.add_argument("-i", help="Use this flag when passing in an image file path I")
-	flag_group.add_argument("-v", help="Use this flag when passing in a video file path V")
-	flag_group.add_argument("-f", help="Use this flag when passing in a folder path containing images F")
+	flag_group.add_argument("--img", help="Use this flag when passing in an image file path I")
+	flag_group.add_argument("--vid", help="Use this flag when passing in a video file path V")
+	parser.add_argument("-r", help="Use this flag to specify the frame rate to convert the video to frame images")
+	flag_group.add_argument("--fldr", help="Use this flag when passing in a folder path containing images F")
 	return parser
 
 def main():
@@ -122,10 +177,11 @@ def main():
 	"""
 	parser = build_parser()
 	input_args = parser.parse_args()
-	image_path = input_args.i
-	video_path = input_args.v
-	folder_path = input_args.f
-	data = read_images(img_path=image_path, folder_path=folder_path, vid_path=video_path)
+	image_path = input_args.img
+	video_path = input_args.vid
+	folder_path = input_args.fldr
+	rate = float(input_args.r)
+	data = read_images(img_path=image_path, folder_path=folder_path, vid_path=video_path, frame_rate=rate)
 
 if __name__ == "__main__":
 	main()

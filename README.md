@@ -1,15 +1,11 @@
 # Semantic Segmentation
 
-## Image Reader
-Python program that reads images in the given folder. The program looks for one argument -- the file path to the folder containing the images to be read. 
+## Semantic Segmentation Library
+This project leverages 2 RTX A6000 GPUs and Tramac's semantic segmentation library to place color coded overlays onto objects given the input of an image view from a car's dashboard.
 
-The program errors if it finds an invalid image format within the folder and if the folder path is not valid.
+The Tramac segmentation library 
 
-Run the program using the following format:
-```
-python3 image_reader.py [path to folder]
-```
-An example to read images from the folder ~/images_source:
-```
-python3 image_reader.py ~/images_source
-```
+## Image Processing Script
+The semantic-segmentation.py script is an image processing Python script that allows the user to input an image, a folder containing images or a video and feeds these into the trained neural network model to get a color coded overlay output. 
+
+The user can use the --img (input an image path), --vid (input a video path) and --flder (input a folder path) flags to specify the type of input you want the program to use. You can also use the -r flag with the --vid flag in order to specify the frame rate for the converted image frames. 
