@@ -3,6 +3,8 @@ import sys
 import os
 import argparse
 import cv2
+import random
+import string
 
 def apply_segmentation_dir(image_paths, dest_path):
 	"""
@@ -39,8 +41,8 @@ def process_images(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5):
 	video and saving the results in a directory.
 
 	The results will be stored in the following formats:
-	- For a single image/directory of images: ./runs/[random Hash code]/[image name]-seg.jpg
-	- For a video: ./runs/[random Hash code]/[video name]-seg.mp4
+	- For a single image/directory of images: ./runs/[random string code]/[image name]-seg.jpg
+	- For a video: ./runs/[random string code]/[video name]-seg.mp4
 
 	Parameters
 	----------
@@ -53,33 +55,43 @@ def process_images(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5):
 	frame_rate: double
 		The desired frame rate to conver the video to frame images
 	"""
-	if img_path:
+	run_id = generate_id()
+	dest_path = "./runs/" + run_id + "/"
+	if img_path: 
 		validate_img(img_path)
 		print("Completed reading image:", img_path)
-		apply_single_segmentation(img_path, "./runs")
+		dest_path += get_file_name(img_path) + "-seg." + get_file_extension(img_path)
+		apply_single_segmentation(img_path, dest_path)
 	if dir_path:
 		img_paths = validate_dir(dir_path)
 		for img_name in img_paths:
 			validate_img(dir_path + "/" + img_name)
 		print("Completed reading images from directory:", dir_path)
-		apply_segmentation_dir(img_paths, "./runs")
+		apply_segmentation_dir(img_paths, dest_path)
 	if vid_path:
-		frames_dir = convert_vid(vid_path, frame_rate)
+		frames_dir = './' + get_file_name(vid_path) + '-frames'
+		vid_to_frames(vid_path, frames_dir, frame_rate)
 		frames_per_second = 1 / frame_rate
 		print("Completed converting video to frames at", frames_per_second, "frames per second")
 		frame_paths = validate_dir(frames_dir)
-		apply_segmentation_dir(frame_paths, "./runs")
-
-def convert_vid(vid_path, frame_rate):
+		dest_path += get_file_name(vid_path) + "-seg." + get_file_extension(vid_path)
+		apply_segmentation_dir(frame_paths, dest_path)
+	
+def frames_to_vid(frames_dir_path, frame_rate):
 	"""
-	Converts a video into image frames and saves it to the current directory in a directory called 
-	./[video name]-frames/. If the directory doesn't already exist, the program creates a new one
-	within the current working directory.
+	Converts provided frame images to a video and saves it to the 
+	"""
+
+def vid_to_frames(vid_path, frames_dir, frame_rate):
+	"""
+	Converts a video into image frames and saves it to the given frames directory.
 
 	Parameters
 	----------
 	vid_path: str
 		The path to the video file to be converted
+	frames_dir: str
+		The path to the directory where the frames from the video will be stores
 	frame_rate: double
 		The desired frame rate when capturing pictures from the video
 	
@@ -89,7 +101,6 @@ def convert_vid(vid_path, frame_rate):
 		The directory path containing the image frames converted from the video
 
 	"""
-	frames_dir = './' + vid_path.split('/')[-1].split('.')[0] + '-frames'
 	if not os.path.isdir(frames_dir):
 		os.mkdir(frames_dir)
 	vidcap = cv2.VideoCapture(vid_path)
@@ -170,6 +181,50 @@ def validate_dir(dir_path):
 	except:
 		print("Invalid Argument:", dir_path, "is not a valid directory")
 
+def generate_id():
+	"""
+	Generates a random 9 letter alphanumeric string and returns it.
+
+	Returns
+	-------
+	str
+		The random generated string
+	"""
+	return ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=8))
+
+def get_file_name(file_path):
+	"""
+	Takes in a file path and returns the name of the file without the extension and the directories
+	the path is contained in.
+
+	Parameters
+	----------
+	file_path: str
+		The given file path
+	
+	Returns
+	-------
+	str
+		The name of the inputted file path
+	"""
+	return file_path.split('/')[-1].split('.')[0]
+
+def get_file_extension(file_path):
+	"""
+	Takes in a file path and returns the extension of the file.
+
+	Parameters
+	----------
+	file_path: str
+		The given file path
+	
+	Returns
+	-------
+	str
+		The extension of the inputted file path
+	"""
+	return file_path.split('.')[-1]
+
 def build_parser():
 	"""
 	Builds a parser with 3 flags to accept a single image, a dir of images and a video file.
@@ -206,7 +261,7 @@ def main():
 	rate = None
 	if input_args.r:
 		rate = float(input_args.r)
-	data = read_images(img_path=image_path, dir_path=dir_path, vid_path=video_path, frame_rate=rate)
+	data = process_images(img_path=image_path, dir_path=dir_path, vid_path=video_path, frame_rate=rate)
 
 if __name__ == "__main__":
 	main()
