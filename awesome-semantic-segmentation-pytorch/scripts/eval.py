@@ -64,6 +64,9 @@ class Evaluator(object):
         else:
             model = self.model
         logger.info("Start validation, Total sample: {:d}".format(len(self.val_loader)))
+        avg_pixAcc = 0.0
+        avg_mIoU = 0.0
+        num_images = 0
         for i, (image, target, filename) in enumerate(self.val_loader):
             image = image.to(self.device)
             target = target.to(self.device)
@@ -72,6 +75,8 @@ class Evaluator(object):
                 outputs = model(image)
             self.metric.update(outputs[0], target)
             pixAcc, mIoU = self.metric.get()
+            avg_mIoU += mIoU
+            avg_pixAcc += pixAcc
             logger.info("Sample: {:d}, validation pixAcc: {:.3f}, mIoU: {:.3f}".format(
                 i + 1, pixAcc * 100, mIoU * 100))
 
@@ -82,6 +87,11 @@ class Evaluator(object):
                 predict = pred.squeeze(0)
                 mask = get_color_pallete(predict, self.args.dataset)
                 mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
+            num_images += 1
+        avg_pixAcc /= num_images
+        avg_mIoU /= num_images
+        logger.info("Average mIoU: {:.4f}, Average pixelAcc: {:.4f}".format(
+                mIoU * 100, pixAcc * 100))
         synchronize()
 
 

@@ -225,7 +225,7 @@ def get_file_extension(file_path):
 	"""
 	return file_path.split('.')[-1]
 
-def build_parser():
+def parse_args():
 	"""
 	Builds a parser with 3 flags to accept a single image, a dir of images and a video file.
 	Parser ensures that at least one of the arguments is provided and that not more than one of them
@@ -239,22 +239,21 @@ def build_parser():
 	
 	"""
 	parser = argparse.ArgumentParser(
-	description="Process images using trained semantic segmentation model.",
-	usage="semantic_segmentation.py [ --img | --vid | --dir ] [ image path I | video path V | directory path D ]")
+		description="Process images using trained semantic segmentation model.",
+		usage="semantic_segmentation.py [ --img | --vid | --dir ] [ image path I | video path V | directory path D ]")
 	flag_group = parser.add_mutually_exclusive_group(required=True)
-	flag_group.add_argument("--img", help="Use this flag when passing in an image file path I")
-	flag_group.add_argument("--vid", help="Use this flag when passing in a video file path V")
-	parser.add_argument("-r", help="Use this flag to specify the frame rate to convert the video to frame images")
-	flag_group.add_argument("--dir", help="Use this flag when passing in a dir path containing images D")
-	return parser
+	flag_group.add_argument("--img", type='str', help="Use this flag when passing in an image file path I")
+	flag_group.add_argument("--vid", type='str', help="Use this flag when passing in a video file path V")
+	parser.add_argument("-r", type='float', help="Use this flag to specify the frame rate to convert the video to frame images")
+	flag_group.add_argument("--dir", type='str', help="Use this flag when passing in a dir path containing images D")
+	return parser.parse_args()
 
 def main():
 	"""
 	Processes the arguments, reads the given image, images in the directory or the given video,
 	passes the images into the trained semantic segmentation model, and writes the output to a directory.
 	"""
-	parser = build_parser()
-	input_args = parser.parse_args()
+	input_args = parse_args()
 	image_path = input_args.img
 	video_path = input_args.vid
 	dir_path = input_args.dir

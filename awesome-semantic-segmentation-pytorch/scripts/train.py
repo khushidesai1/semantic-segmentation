@@ -97,6 +97,8 @@ def parse_args():
                         help='run validation every val-epoch')
     parser.add_argument('--skip-val', action='store_true', default=False,
                         help='skip validation during training')
+    parser.add_argument('--input-pic', type=str, default=None, 
+                        help='run evaluation on a custom input image')
     args = parser.parse_args()
 
     # default settings for epochs, batch_size and lr
