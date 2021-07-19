@@ -1,6 +1,8 @@
 import os
 import sys
 
+from PIL import Image
+
 from torchvision import transforms
 
 import torch
@@ -11,9 +13,10 @@ from core.utils.distributed import synchronize, get_rank, make_data_sampler, mak
 from core.utils.logger import setup_logger
 from core.models.model_zoo import get_segmentation_model
 from core.data.dataloader import get_segmentation_dataset
+from core.utils.visualize import get_color_pallete
 from core.utils.score import SegmentationMetric
 
-import argparse
+from train import parse_args
 
 class CustomEvaluator(object):
     def __init__(self, args):
@@ -36,37 +39,32 @@ class CustomEvaluator(object):
         self.metric = SegmentationMetric(val_dataset.num_class)
 
     def eval(self):
-        pass
+        self.metric.reset()
+        self.model.eval()
+        if self.args.distributed:
+            model = self.model.module
+        else:
+            model = self.model
+        image_path = self.args.input_pic
+        target_image_path = self.args.input_gt
+        image = Image.open(image_path)
+        target = Image.open(target_image_path)
+        with torch.no_grad():
+                outputs = model(image)
+        self.metric.update(outputs[0], target)
+        pixAcc, mIoU = self.metric.get()
+        logger.info("PixAcc: {:.4f}, mIoU: {:.4f}".format(pixAcc * 100, mIoU * 100))
+        if self.args.save_pred:
+            pred = torch.argmax(outputs[0], 1)
+            pred = pred.cpu().data.numpy()
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description='Evaluator that evaluates using a model using custom images and ground truth images as input',
-        usage='eval_custom.py [--input_image I]')
-    parser.add_argument('--model', type=str, default='fcn',
-                        choices=['fcn32s', 'fcn16s', 'fcn8s',
-                                 'fcn', 'psp', 'deeplabv3', 'deeplabv3_plus',
-                                 'danet', 'denseaspp', 'bisenet',
-                                 'encnet', 'dunet', 'icnet',
-                                 'enet', 'ocnet', 'ccnet', 'psanet',
-                                 'cgnet', 'espnet', 'lednet', 'dfanet'],
-                        help='model name (default: fcn32s)')
-    parser.add_argument('--backbone', type=str, default='resnet50',
-                        choices=['vgg16', 'resnet18', 'resnet50',
-                                 'resnet101', 'resnet152', 'densenet121',
-                                 'densenet161', 'densenet169', 'densenet201'],
-                        help='backbone name (default: vgg16)')
-    parser.add_argument('--dataset', type=str, default='pascal_voc',
-                        choices=['pascal_voc', 'pascal_aug', 'ade20k',
-                                 'citys', 'sbu'],
-                        help='dataset name (default: pascal_voc)')
-    parser.add_argument('--input-image', type='str', help='directory to the input image', required=True)
-    parser.add_argument('--input-gt', type='str', help='directory to the input image ground truth', required=True)
-    parser.add_argument('--aux', action='store_true', default=False,
-                        help='Auxiliary loss')
-    return parser.parse_args()
+            predict = pred.squeeze(0)
+            mask = get_color_pallete(predict, self.args.dataset)
+            filename = os.path.split(image)[1]
+            mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
+        synchronize()
 
-def main():
-    pass
+if __name__ == '__main__':
     args = parse_args()
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
     args.distributed = num_gpus > 1
@@ -90,6 +88,3 @@ def main():
     evaluator = CustomEvaluator(args)
     evaluator.eval()
     torch.cuda.empty_cache()
-
-if __name__ == '__main__':
-    main()

@@ -99,6 +99,8 @@ def parse_args():
                         help='skip validation during training')
     parser.add_argument('--input-pic', type=str, default=None, 
                         help='run evaluation on a custom input image')
+    parser.add_argument('--input-gt', type='str', default=None,
+                        help='input ground truth image to run evaluation on a custom input image')
     args = parser.parse_args()
 
     # default settings for epochs, batch_size and lr
