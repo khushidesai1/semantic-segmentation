@@ -30,6 +30,7 @@ class CustomEvaluator(object):
             transforms.ToTensor(),
             transforms.Normalize([.485, .456, .406], [.229, .224, .225]),
         ])
+        self.transform = input_transform
         BatchNorm2d = nn.SyncBatchNorm if args.distributed else nn.BatchNorm2d
         self.model = get_segmentation_model(model=args.model, dataset=args.dataset, backbone=args.backbone,
                                             aux=args.aux, pretrained=True, pretrained_base=False,
@@ -53,6 +54,10 @@ class CustomEvaluator(object):
         target_image_path = self.args.input_gt
         image = Image.open(image_path)
         target = Image.open(target_image_path)
+        image = self.transform(image)
+        target = self.transform(target)
+        image = image.to(self.device)
+        target = target.to(self.device)
         with torch.no_grad():
                 outputs = model(image)
       
