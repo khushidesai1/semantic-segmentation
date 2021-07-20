@@ -55,6 +55,7 @@ class CustomEvaluator(object):
         target = Image.open(target_image_path)
         with torch.no_grad():
                 outputs = model(image)
+      
         self.metric.update(outputs[0], target)
         pixAcc, mIoU = self.metric.get()
         logger.info("PixAcc: {:.4f}, mIoU: {:.4f}".format(pixAcc * 100, mIoU * 100))
