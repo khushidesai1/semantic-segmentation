@@ -49,15 +49,16 @@ class CustomEvaluator(object):
             model = self.model.module
         else:
             model = self.model
-        for (image, target, filename) in self.data:
+        for i, (image, target, filename) in enumerate(self.data):
         # image_path = self.args.input_pic
         # target_image_path = self.args.input_gt
         # image = Image.open(image_path)
         # target = Image.open(target_image_path)
-            image = self.transform(image)
-            target = self.transform(target)
+            # image = self.transform(image)
+            # target = self.transform(target)
             image = image.to(self.device)
             target = target.to(self.device)
+            print('Transformed images')
             with torch.no_grad():
                     outputs = model(image)
         
@@ -72,6 +73,7 @@ class CustomEvaluator(object):
                 mask = get_color_pallete(predict, self.args.dataset)
                 filename = os.path.split(image)[1]
                 mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
+                print('Completed evaluation')
         synchronize()
 
 if __name__ == '__main__':
