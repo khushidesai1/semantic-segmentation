@@ -58,7 +58,7 @@ class CustomSegmentation(SegmentationDataset):
         index = np.digitize(mask.ravel(), self._mapping, right=True)
         return self._key[index].reshape(mask.shape)
 
-    def __getitem__(self):
+    def __getitem__(self, index):
         img = Image.open(self.image).convert('RGB')
         # if self.mode == 'test':
         #     if self.transform is not None:
