@@ -39,8 +39,8 @@ class CustomEvaluator(object):
                 device_ids=[args.local_rank], output_device=args.local_rank)
         self.model.to(self.device)
 
-        data = get_segmentation_dataset('custom', input_pic=args.input_pic, input_gt=args.input_gt, transform=input_transform)
-        self.metric = SegmentationMetric(data.num_class)
+        self.data = get_segmentation_dataset('custom', input_pic=args.input_pic, input_gt=args.input_gt, transform=input_transform)
+        self.metric = SegmentationMetric(self.data.num_class)
 
     def eval(self):
         self.metric.reset()
@@ -49,8 +49,7 @@ class CustomEvaluator(object):
             model = self.model.module
         else:
             model = self.model
-        for (image, target, filename) in data:
-
+        for (image, target, filename) in self.data:
         # image_path = self.args.input_pic
         # target_image_path = self.args.input_gt
         # image = Image.open(image_path)
