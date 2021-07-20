@@ -30,7 +30,6 @@ class CustomEvaluator(object):
             transforms.ToTensor(),
             transforms.Normalize([.485, .456, .406], [.229, .224, .225]),
         ])
-        self.transform = input_transform
         BatchNorm2d = nn.SyncBatchNorm if args.distributed else nn.BatchNorm2d
         self.model = get_segmentation_model(model=args.model, dataset=args.dataset, backbone=args.backbone,
                                             aux=args.aux, pretrained=True, pretrained_base=False,
@@ -40,8 +39,8 @@ class CustomEvaluator(object):
                 device_ids=[args.local_rank], output_device=args.local_rank)
         self.model.to(self.device)
 
-        val_dataset = get_segmentation_dataset(args.dataset, split='val', mode='testval', transform=input_transform)
-        self.metric = SegmentationMetric(val_dataset.num_class)
+        data = get_segmentation_dataset('custom', input_pic=args.input_pic, input_gt=args.input_gt, transform=input_transform)
+        self.metric = SegmentationMetric(data.num_class)
 
     def eval(self):
         self.metric.reset()
@@ -50,28 +49,30 @@ class CustomEvaluator(object):
             model = self.model.module
         else:
             model = self.model
-        image_path = self.args.input_pic
-        target_image_path = self.args.input_gt
-        image = Image.open(image_path)
-        target = Image.open(target_image_path)
-        image = self.transform(image)
-        target = self.transform(target)
-        image = image.to(self.device)
-        target = target.to(self.device)
-        with torch.no_grad():
-                outputs = model(image)
-      
-        self.metric.update(outputs[0], target)
-        pixAcc, mIoU = self.metric.get()
-        logger.info("PixAcc: {:.4f}, mIoU: {:.4f}".format(pixAcc * 100, mIoU * 100))
-        if self.args.save_pred:
-            pred = torch.argmax(outputs[0], 1)
-            pred = pred.cpu().data.numpy()
+        for (image, target, filename) in data:
 
-            predict = pred.squeeze(0)
-            mask = get_color_pallete(predict, self.args.dataset)
-            filename = os.path.split(image)[1]
-            mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
+        # image_path = self.args.input_pic
+        # target_image_path = self.args.input_gt
+        # image = Image.open(image_path)
+        # target = Image.open(target_image_path)
+            image = self.transform(image)
+            target = self.transform(target)
+            image = image.to(self.device)
+            target = target.to(self.device)
+            with torch.no_grad():
+                    outputs = model(image)
+        
+            self.metric.update(outputs[0], target)
+            pixAcc, mIoU = self.metric.get()
+            logger.info("PixAcc: {:.4f}, mIoU: {:.4f}".format(pixAcc * 100, mIoU * 100))
+            if self.args.save_pred:
+                pred = torch.argmax(outputs[0], 1)
+                pred = pred.cpu().data.numpy()
+
+                predict = pred.squeeze(0)
+                mask = get_color_pallete(predict, self.args.dataset)
+                filename = os.path.split(image)[1]
+                mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
         synchronize()
 
 if __name__ == '__main__':
