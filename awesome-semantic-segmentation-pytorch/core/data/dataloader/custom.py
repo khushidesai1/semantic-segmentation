@@ -60,18 +60,18 @@ class CustomSegmentation(SegmentationDataset):
 
     def __getitem__(self, index):
         img = Image.open(self.image).convert('RGB')
-        # if self.mode == 'test':
-        #     if self.transform is not None:
-        #         img = self.transform(img)
-        #     return img, os.path.basename(self.image)
+        if self.mode == 'test':
+            if self.transform is not None:
+                img = self.transform(img)
+            return img, os.path.basename(self.image)
         mask = Image.open(self.mask_path)
         # synchrosized transform
-        # if self.mode == 'train':
-        # img, mask = self._sync_transform(img, mask)
-        # elif self.mode == 'val':
-        # img, mask = self._val_sync_transform(img, mask)
-        # else:
-            # assert self.mode == 'testval'
+        if self.mode == 'train':
+            img, mask = self._sync_transform(img, mask)
+        elif self.mode == 'val':
+            img, mask = self._val_sync_transform(img, mask)
+        else:
+            assert self.mode == 'testval'
         img, mask = self._img_transform(img), self._mask_transform(mask)
         # general resize, normalize and toTensor
         if self.transform is not None:
