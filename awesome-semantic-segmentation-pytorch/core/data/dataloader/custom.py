@@ -53,8 +53,10 @@ class CustomSegmentation(SegmentationDataset):
     def _class_to_index(self, mask):
         # assert the value
         values = np.unique(mask)
+        print(self._mapping)
+        print(values)
         for value in values:
-            assert (value in self._mapping)
+           assert (value in self._mapping)
         index = np.digitize(mask.ravel(), self._mapping, right=True)
         return self._key[index].reshape(mask.shape)
 
