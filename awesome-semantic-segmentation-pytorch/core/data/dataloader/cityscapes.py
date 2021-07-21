@@ -81,7 +81,6 @@ class CitySegmentation(SegmentationDataset):
         # general resize, normalize and toTensor
         if self.transform is not None:
             img = self.transform(img)
-        print(img.shape)
         return img, mask, os.path.basename(self.images[index])
 
     def _mask_transform(self, mask):

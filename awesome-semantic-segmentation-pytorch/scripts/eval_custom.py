@@ -5,8 +5,6 @@ cur_path = os.path.abspath(os.path.dirname(__file__))
 root_path = os.path.split(cur_path)[0]
 sys.path.append(root_path)
 
-from PIL import Image
-
 from torchvision import transforms
 
 import torch
@@ -55,11 +53,9 @@ class CustomEvaluator(object):
         else:
             model = self.model
         for i, (image, target, filename) in enumerate(self.dataloader):
-            
             image = image.to(self.device)
             target = target.to(self.device)
-            print('Transformed images')
-            print(image.shape)
+
             with torch.no_grad():
                     outputs = model(image)
         
@@ -73,8 +69,8 @@ class CustomEvaluator(object):
                 predict = pred.squeeze(0)
                 mask = get_color_pallete(predict, self.args.dataset)
                 mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
-                print('Completed evaluation')
         synchronize()
+        logger.info('Validation complete')
 
 if __name__ == '__main__':
     args = parse_args()

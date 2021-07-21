@@ -68,10 +68,9 @@ class Evaluator(object):
         avg_mIoU = 0.0
         num_images = 0
         for i, (image, target, filename) in enumerate(self.val_loader):
-            print('before to device', image.shape)
             image = image.to(self.device)
             target = target.to(self.device)
-            print('before eval', image.shape)
+
             with torch.no_grad():
                 outputs = model(image)
             self.metric.update(outputs[0], target)
