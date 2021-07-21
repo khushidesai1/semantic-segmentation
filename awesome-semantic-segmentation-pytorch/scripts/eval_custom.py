@@ -50,12 +50,6 @@ class CustomEvaluator(object):
         else:
             model = self.model
         for i, (image, target, filename) in enumerate(self.data):
-        # image_path = self.args.input_pic
-        # target_image_path = self.args.input_gt
-        # image = Image.open(image_path)
-        # target = Image.open(target_image_path)
-            # image = self.transform(image)
-            # target = self.transform(target)
             image = image.to(self.device)
             target = target.to(self.device)
             print('Transformed images')
