@@ -72,7 +72,7 @@ class CustomSegmentation(SegmentationDataset):
             img, mask = self._val_sync_transform(img, mask)
         else:
             assert self.mode == 'testval'
-        img, mask = self._img_transform(img), self._mask_transform(mask)
+            img, mask = self._img_transform(img), self._mask_transform(mask)
         # general resize, normalize and toTensor
         if self.transform is not None:
             img = self.transform(img)
