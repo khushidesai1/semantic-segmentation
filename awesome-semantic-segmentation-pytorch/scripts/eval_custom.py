@@ -11,6 +11,7 @@ from torchvision import transforms
 
 import torch
 import torch.backends.cudnn as cudnn
+import torch.utils.data as data
 import torch.nn as nn
 
 from core.utils.distributed import synchronize, get_rank, make_data_sampler, make_batch_data_sampler
@@ -30,6 +31,11 @@ class CustomEvaluator(object):
             transforms.ToTensor(),
             transforms.Normalize([.485, .456, .406], [.229, .224, .225]),
         ])
+        dataset = get_segmentation_dataset('custom', input_pic=args.input_pic, input_gt=args.input_gt, mode='testval', transform=input_transform, split='val')
+        sampler = make_data_sampler(dataset, False, args.distributed)
+        batch_sampler = make_batch_data_sampler(sampler, images_per_batch=1)
+        self.dataloader = data.DataLoader(dataset=dataset, batch_sampler=batch_sampler, num_workers=args.workers, pin_memory=True)
+        
         BatchNorm2d = nn.SyncBatchNorm if args.distributed else nn.BatchNorm2d
         self.model = get_segmentation_model(model=args.model, dataset=args.dataset, backbone=args.backbone,
                                             aux=args.aux, pretrained=True, pretrained_base=False,
@@ -39,8 +45,7 @@ class CustomEvaluator(object):
                 device_ids=[args.local_rank], output_device=args.local_rank)
         self.model.to(self.device)
 
-        self.data = get_segmentation_dataset('custom', input_pic=args.input_pic, input_gt=args.input_gt, mode='testval', transform=input_transform, split='val')
-        self.metric = SegmentationMetric(self.data.num_class)
+        self.metric = SegmentationMetric(dataset.num_class)
 
     def eval(self):
         self.metric.reset()
@@ -49,10 +54,12 @@ class CustomEvaluator(object):
             model = self.model.module
         else:
             model = self.model
-        for i, (image, target, filename) in enumerate(self.data):
+        for i, (image, target, filename) in enumerate(self.dataloader):
+            
             image = image.to(self.device)
             target = target.to(self.device)
             print('Transformed images')
+            print(image.shape)
             with torch.no_grad():
                     outputs = model(image)
         
@@ -65,7 +72,6 @@ class CustomEvaluator(object):
 
                 predict = pred.squeeze(0)
                 mask = get_color_pallete(predict, self.args.dataset)
-                filename = os.path.split(image)[1]
                 mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
                 print('Completed evaluation')
         synchronize()
