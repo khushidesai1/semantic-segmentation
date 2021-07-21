@@ -39,7 +39,7 @@ class CustomEvaluator(object):
                 device_ids=[args.local_rank], output_device=args.local_rank)
         self.model.to(self.device)
 
-        self.data = get_segmentation_dataset('custom', input_pic=args.input_pic, input_gt=args.input_gt, mode='testval', transform=input_transform)
+        self.data = get_segmentation_dataset('custom', input_pic=args.input_pic, input_gt=args.input_gt, mode='testval', transform=input_transform, split='val')
         self.metric = SegmentationMetric(self.data.num_class)
 
     def eval(self):
