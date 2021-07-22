@@ -17,6 +17,7 @@ datasets = {
     'coco': COCOSegmentation,
     'citys': CitySegmentation,
     'custom-metric': CustomMetricSegmentation,
+    'custom': CustomSegmentation,
     'sbu': SBUSegmentation,
 }
 

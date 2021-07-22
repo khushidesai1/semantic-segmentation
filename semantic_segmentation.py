@@ -7,6 +7,10 @@ import cv2
 import random
 import string
 
+MODEL = ' --model psp'
+BACKBONE = ' --backbone resnet50'
+DATASET = ' --dataset citys'
+
 def apply_segmentation_dir(image_paths, dest_path):
 	"""
 	Takes in image paths from a directory and feeds each image into the trained Tramac neural 
@@ -20,10 +24,14 @@ def apply_segmentation_dir(image_paths, dest_path):
 		The path to the destination directory where the segmented images will be stored
 	"""
 	os.chdir('./awesome-semantic-segmentation-pytorch/scripts')
-	os.system('python eval_custom.py ')
+	for path in image_paths:
+		dest_path = join(dest_path, get_file_name(path) + "-seg" + get_file_extension(path))
+		outdir = ' --outdir ' + dest_path
+		img = ' --input-pic ' + path
+		os.system('python eval_custom.py ' + MODEL + BACKBONE + DATASET + img + outdir)
 	os.chdir('../..')
 
-def apply_single_segmentation(img_path, dest_path):
+def apply_single_segmentation(img_path, dest_path, mask_path=None):
 	"""
 	Takes in a single image path and feeds the image into the trained Tramac neural network model.
 	Writes the resulting overlay image to the specified directory path. 
@@ -36,10 +44,16 @@ def apply_single_segmentation(img_path, dest_path):
 		The path to the destination directory where the segmented image will be stored
 	"""
 	os.chdir('./awesome-semantic-segmentation-pytorch/scripts')
-	os.system('python eval_custom.py ')
+	img = ' --input-pic ' + img_path
+	outdir = ' --outdir ' + dest_path
+	if not mask_path:
+		os.system('python eval_custom.py' + MODEL + BACKBONE + DATASET + img + outdir)
+	else:
+		mask = ' --input-gt ' + mask_path
+		os.system('python eval_custom_metric.py' + MODEL + BACKBONE + DATASET + img + outdir + mask)
 	os.chdir('../..')
 					
-def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5):
+def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, mask_path=None):
 	"""
 	Reads the given image, images in the given directory, or image frames from the given video.
 	Based on the format of the input, processes the image(s) by applying segmentation to each
@@ -68,7 +82,7 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5):
 		validate_img(img_path)
 		print("Completed reading image:", img_path)
 		dest_path = join(dest_path, get_file_name(img_path) + "-seg" + get_file_extension(img_path))
-		apply_single_segmentation(img_path, dest_path)
+		apply_single_segmentation(img_path, dest_path, mask_path)
 		print("Completed segmentation evaluation. Result is saved as", dest_path)
 	if dir_path:
 		img_paths = validate_dir(dir_path)
@@ -271,14 +285,16 @@ def parse_args():
 	
 	"""
 	parser = argparse.ArgumentParser(
-		description="Process images using trained semantic segmentation model.",
-		usage="semantic_segmentation.py [ --img | --vid | --dir ] [ image path I | video path V | directory path D ]")
+		description='Process images using trained semantic segmentation model.',
+		usage='semantic_segmentation.py [ --img | --vid | --dir ] [ image path I | video path V | directory path D ]')
 	flag_group = parser.add_mutually_exclusive_group(required=True)
 	flag_group.add_argument("--img", help="Use this flag when passing in an image file path I")
 	flag_group.add_argument("--vid", help="Use this flag when passing in a video file path V")
+	flag_group.add_argument("--dir", help="Use this flag when passing in a dir path containing images D")
 	parser.add_argument("-r", help="Use this flag to specify the frame rate to convert the video to frame images",
 						default=0.05)
-	flag_group.add_argument("--dir", help="Use this flag when passing in a dir path containing images D")
+	parser.add_argument("--mask", help="Use this flag to specify the Cityscapes mask image associated with the input image", 
+						default=None)
 	return parser.parse_args()
 
 def main():
@@ -290,10 +306,11 @@ def main():
 	image_path = input_args.img
 	video_path = input_args.vid
 	dir_path = input_args.dir
+	mask_path = input_args.mask
 	rate = None
 	if input_args.r:
 		rate = float(input_args.r)
-	data = process_input(img_path=image_path, dir_path=dir_path, vid_path=video_path, frame_rate=rate)
+	process_input(img_path=image_path, dir_path=dir_path, vid_path=video_path, frame_rate=rate, mask_path=mask_path)
 
 if __name__ == "__main__":
 	main()

@@ -17,7 +17,6 @@ from core.utils.logger import setup_logger
 from core.models.model_zoo import get_segmentation_model
 from core.data.dataloader import get_segmentation_dataset
 from core.utils.visualize import get_color_pallete
-from core.utils.score import SegmentationMetric
 
 from train import parse_args
 
@@ -43,34 +42,28 @@ class CustomEvaluator(object):
                 device_ids=[args.local_rank], output_device=args.local_rank)
         self.model.to(self.device)
 
-        # self.metric = SegmentationMetric(dataset.num_class)
-
     def eval(self):
-        # self.metric.reset()
         self.model.eval()
         if self.args.distributed:
             model = self.model.module
         else:
             model = self.model
-        for i, (image, filename) in enumerate(self.dataloader):
+        logger.info('Starting Evaluation')
+        for i, (image) in enumerate(self.dataloader):
             image = image.to(self.device)
-            # target = target.to(self.device)
 
             with torch.no_grad():
                     outputs = model(image)
-        
-            # self.metric.update(outputs[0], target)
-            # pixAcc, mIoU = self.metric.get()
-            # logger.info("PixAcc: {:.4f}, mIoU: {:.4f}".format(pixAcc * 100, mIoU * 100))
+            
             if self.args.save_pred:
                 pred = torch.argmax(outputs[0], 1)
                 pred = pred.cpu().data.numpy()
 
                 predict = pred.squeeze(0)
                 mask = get_color_pallete(predict, self.args.dataset)
-                mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
+                mask.save(outpath)
         synchronize()
-        logger.info('Validation complete')
+        logger.info('Evaluation Completed')
 
 if __name__ == '__main__':
     args = parse_args()
@@ -88,7 +81,8 @@ if __name__ == '__main__':
         synchronize()
     args.save_pred = True
     if args.save_pred:
-        outdir = '../runs/custom_pred_pic/{}_{}_{}'.format(args.model, args.backbone, args.dataset)
+        outpath = args.outdir
+        outdir = os.path.dirname(outpath)
         if not os.path.isdir(outdir):
             os.makedirs(outdir)
     logger = setup_logger("semantic_segmentation", args.log_dir, get_rank(),

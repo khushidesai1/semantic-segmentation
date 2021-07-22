@@ -101,6 +101,8 @@ def parse_args():
                         help='run evaluation on a custom input image')
     parser.add_argument('--input-gt', default=None,
                         help='input ground truth image to run evaluation on a custom input image')
+    parser.add_argument('--outdir', default=None,
+                        help='out directory where segmented images should be saved')
     args = parser.parse_args()
 
     # default settings for epochs, batch_size and lr
