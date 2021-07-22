@@ -49,7 +49,7 @@ class CustomEvaluator(object):
             model = self.model.module
         else:
             model = self.model
-        for i, (image, filename) in enumerate(self.dataloader):
+        for i, (image) in enumerate(self.dataloader):
             image = image.to(self.device)
 
             with torch.no_grad():
