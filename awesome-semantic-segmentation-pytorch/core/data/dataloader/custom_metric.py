@@ -81,6 +81,9 @@ class CustomMetricSegmentation(SegmentationDataset):
     def _mask_transform(self, mask):
         target = self._class_to_index(np.array(mask).astype('int32'))
         return torch.LongTensor(np.array(target).astype('int32'))
+        
+    def __len__(self):
+    	return 1
 
     @property
     def pred_offset(self):
