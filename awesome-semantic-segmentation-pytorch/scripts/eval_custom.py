@@ -46,7 +46,7 @@ class CustomEvaluator(object):
         # self.metric = SegmentationMetric(dataset.num_class)
 
     def eval(self):
-        self.metric.reset()
+        # self.metric.reset()
         self.model.eval()
         if self.args.distributed:
             model = self.model.module
