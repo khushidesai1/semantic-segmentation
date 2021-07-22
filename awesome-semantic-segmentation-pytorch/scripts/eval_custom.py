@@ -61,7 +61,8 @@ class CustomEvaluator(object):
 
                 predict = pred.squeeze(0)
                 mask = get_color_pallete(predict, self.args.dataset)
-                mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
+                logger.info('Saving to: ' + outpath)
+                mask.save(outpath)
         synchronize()
         logger.info('Validation complete')
 
@@ -81,7 +82,8 @@ if __name__ == '__main__':
         synchronize()
     args.save_pred = True
     if args.save_pred:
-        outdir = '../runs/custom_pred_pic/{}_{}_{}'.format(args.model, args.backbone, args.dataset)
+        outpath = args.outdir
+        outdir = os.path.dirname(outpath)
         if not os.path.isdir(outdir):
             os.makedirs(outdir)
     logger = setup_logger("semantic_segmentation", args.log_dir, get_rank(),

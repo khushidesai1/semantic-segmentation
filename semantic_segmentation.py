@@ -75,7 +75,7 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, m
 		The desired frame rate to conver the video to frame images
 	"""
 	run_id = generate_id()
-	dest_path = join("./runs", run_id)
+	dest_path = join("../../runs", run_id)
 	if not os.path.isdir(dest_path):
 		os.makedirs(dest_path)
 	if img_path: 
