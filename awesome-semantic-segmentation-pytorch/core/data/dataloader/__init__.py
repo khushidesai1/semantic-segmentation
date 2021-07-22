@@ -3,6 +3,7 @@ This module provides data loaders and transformers for popular vision datasets.
 """
 from .mscoco import COCOSegmentation
 from .cityscapes import CitySegmentation
+from .custom_metric import CustomMetricSegmentation
 from .custom import CustomSegmentation
 from .ade import ADE20KSegmentation
 from .pascal_voc import VOCSegmentation
@@ -15,7 +16,7 @@ datasets = {
     'pascal_aug': VOCAugSegmentation,
     'coco': COCOSegmentation,
     'citys': CitySegmentation,
-    'custom': CustomSegmentation,
+    'custom-metric': CustomMetricSegmentation,
     'sbu': SBUSegmentation,
 }
 

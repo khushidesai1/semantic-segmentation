@@ -21,7 +21,7 @@ from core.utils.score import SegmentationMetric
 
 from train import parse_args
 
-class CustomEvaluator(object):
+class CustomMetricEvaluator(object):
     def __init__(self, args):
         self.args = args
         self.device = torch.device(args.device)
@@ -29,7 +29,7 @@ class CustomEvaluator(object):
             transforms.ToTensor(),
             transforms.Normalize([.485, .456, .406], [.229, .224, .225]),
         ])
-        dataset = get_segmentation_dataset('custom', input_pic=args.input_pic, mode='testval', transform=input_transform, split='val')
+        dataset = get_segmentation_dataset('custom-metric', input_pic=args.input_pic, input_gt=args.input_gt, mode='testval', transform=input_transform, split='val')
         sampler = make_data_sampler(dataset, False, args.distributed)
         batch_sampler = make_batch_data_sampler(sampler, images_per_batch=1)
         self.dataloader = data.DataLoader(dataset=dataset, batch_sampler=batch_sampler, num_workers=args.workers, pin_memory=True)
@@ -43,7 +43,7 @@ class CustomEvaluator(object):
                 device_ids=[args.local_rank], output_device=args.local_rank)
         self.model.to(self.device)
 
-        # self.metric = SegmentationMetric(dataset.num_class)
+        self.metric = SegmentationMetric(dataset.num_class)
 
     def eval(self):
         self.metric.reset()
@@ -52,16 +52,16 @@ class CustomEvaluator(object):
             model = self.model.module
         else:
             model = self.model
-        for i, (image, filename) in enumerate(self.dataloader):
+        for i, (image, target, filename) in enumerate(self.dataloader):
             image = image.to(self.device)
-            # target = target.to(self.device)
+            target = target.to(self.device)
 
             with torch.no_grad():
                     outputs = model(image)
         
-            # self.metric.update(outputs[0], target)
-            # pixAcc, mIoU = self.metric.get()
-            # logger.info("PixAcc: {:.4f}, mIoU: {:.4f}".format(pixAcc * 100, mIoU * 100))
+            self.metric.update(outputs[0], target)
+            pixAcc, mIoU = self.metric.get()
+            logger.info("PixAcc: {:.4f}, mIoU: {:.4f}".format(pixAcc * 100, mIoU * 100))
             if self.args.save_pred:
                 pred = torch.argmax(outputs[0], 1)
                 pred = pred.cpu().data.numpy()
@@ -93,6 +93,6 @@ if __name__ == '__main__':
             os.makedirs(outdir)
     logger = setup_logger("semantic_segmentation", args.log_dir, get_rank(),
                           filename='{}_{}_{}_log.txt'.format(args.model, args.backbone, args.dataset), mode='a+')
-    evaluator = CustomEvaluator(args)
+    evaluator = CustomMetricEvaluator(args)
     evaluator.eval()
     torch.cuda.empty_cache()

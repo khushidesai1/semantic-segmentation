@@ -7,7 +7,7 @@ from PIL import Image
 from .segbase import SegmentationDataset
 
 
-class CustomSegmentation(SegmentationDataset):
+class CustomMetricSegmentation(SegmentationDataset):
     """Custom Semantic Segmentation Dataset.
 
     Parameters
@@ -36,10 +36,10 @@ class CustomSegmentation(SegmentationDataset):
     """
     NUM_CLASS = 19
 
-    def __init__(self, input_pic=None, root='', split='train', mode='testval', transform=None, **kwargs):
-        super(CustomSegmentation, self).__init__(root, split, mode, transform, **kwargs)
-        self.image = input_pic
-        assert self.image != None
+    def __init__(self, input_pic=None, input_gt=None, root='', split='train', mode='testval', transform=None, **kwargs):
+        super(CustomMetricSegmentation, self).__init__(root, split, mode, transform, **kwargs)
+        self.image, self.mask_path = input_pic, input_gt
+        assert self.image != None and self.mask_path != None
         self.valid_classes = [7, 8, 11, 12, 13, 17, 19, 20, 21, 22,
                               23, 24, 25, 26, 27, 28, 31, 32, 33]
         self._key = np.array([-1, -1, -1, -1, -1, -1,
@@ -50,13 +50,13 @@ class CustomSegmentation(SegmentationDataset):
                               -1, -1, 16, 17, 18])
         self._mapping = np.array(range(-1, len(self._key) - 1)).astype('int32')
 
-    # def _class_to_index(self, mask):
-    #     # assert the value
-    #     values = np.unique(mask)
-    #     for value in values:
-    #        assert (value in self._mapping)
-    #     index = np.digitize(mask.ravel(), self._mapping, right=True)    
-    #     return self._key[index].reshape(mask.shape)
+    def _class_to_index(self, mask):
+        # assert the value
+        values = np.unique(mask)
+        for value in values:
+           assert (value in self._mapping)
+        index = np.digitize(mask.ravel(), self._mapping, right=True)    
+        return self._key[index].reshape(mask.shape)
 
     def __getitem__(self, index):
         img = Image.open(self.image).convert('RGB')
@@ -64,7 +64,7 @@ class CustomSegmentation(SegmentationDataset):
         #     if self.transform is not None:
         #         img = self.transform(img)
         #     return img, os.path.basename(self.image)
-        # mask = Image.open(self.mask_path)
+        mask = Image.open(self.mask_path)
         # synchrosized transform
         # if self.mode == 'train':
         #     img, mask = self._sync_transform(img, mask)
@@ -72,16 +72,15 @@ class CustomSegmentation(SegmentationDataset):
         #     img, mask = self._val_sync_transform(img, mask)
         # else:
         assert self.mode == 'testval'
-        # img, mask = self._img_transform(img), self._mask_transform(mask)
-        img = self._img_transform(img)
+        img, mask = self._img_transform(img), self._mask_transform(mask)
         # general resize, normalize and toTensor
         if self.transform is not None:
             img = self.transform(img)
-        return img, os.path.basename(self.image)
+        return img, mask, os.path.basename(self.image)
 
-    # def _mask_transform(self, mask):
-    #     target = self._class_to_index(np.array(mask).astype('int32'))
-    #     return torch.LongTensor(np.array(target).astype('int32'))
+    def _mask_transform(self, mask):
+        target = self._class_to_index(np.array(mask).astype('int32'))
+        return torch.LongTensor(np.array(target).astype('int32'))
 
     @property
     def pred_offset(self):
@@ -127,4 +126,4 @@ class CustomSegmentation(SegmentationDataset):
 
 
 if __name__ == '__main__':
-    dataset = CustomSegmentation()
+    dataset = CustomMetricSegmentation()
