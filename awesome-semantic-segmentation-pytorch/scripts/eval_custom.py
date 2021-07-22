@@ -43,10 +43,7 @@ class CustomEvaluator(object):
                 device_ids=[args.local_rank], output_device=args.local_rank)
         self.model.to(self.device)
 
-        # self.metric = SegmentationMetric(dataset.num_class)
-
     def eval(self):
-        # self.metric.reset()
         self.model.eval()
         if self.args.distributed:
             model = self.model.module
@@ -54,14 +51,10 @@ class CustomEvaluator(object):
             model = self.model
         for i, (image, filename) in enumerate(self.dataloader):
             image = image.to(self.device)
-            # target = target.to(self.device)
 
             with torch.no_grad():
                     outputs = model(image)
-        
-            # self.metric.update(outputs[0], target)
-            # pixAcc, mIoU = self.metric.get()
-            # logger.info("PixAcc: {:.4f}, mIoU: {:.4f}".format(pixAcc * 100, mIoU * 100))
+
             if self.args.save_pred:
                 pred = torch.argmax(outputs[0], 1)
                 pred = pred.cpu().data.numpy()
