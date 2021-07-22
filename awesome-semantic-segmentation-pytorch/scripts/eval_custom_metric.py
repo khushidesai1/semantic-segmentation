@@ -52,7 +52,8 @@ class CustomMetricEvaluator(object):
             model = self.model.module
         else:
             model = self.model
-        for i, (image, target, filename) in enumerate(self.dataloader):
+        logger.info('Starting Evaluation')
+        for i, (image, target) in enumerate(self.dataloader):
             image = image.to(self.device)
             target = target.to(self.device)
 
@@ -68,9 +69,9 @@ class CustomMetricEvaluator(object):
 
                 predict = pred.squeeze(0)
                 mask = get_color_pallete(predict, self.args.dataset)
-                mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
+                mask.save(outpath)
         synchronize()
-        logger.info('Validation complete')
+        logger.info('Evaluation Completed')
 
 if __name__ == '__main__':
     args = parse_args()
@@ -88,7 +89,8 @@ if __name__ == '__main__':
         synchronize()
     args.save_pred = True
     if args.save_pred:
-        outdir = '../runs/custom_pred_pic/{}_{}_{}'.format(args.model, args.backbone, args.dataset)
+        outpath = args.outdir
+        outdir = os.path.dirname(outpath)
         if not os.path.isdir(outdir):
             os.makedirs(outdir)
     logger = setup_logger("semantic_segmentation", args.log_dir, get_rank(),
