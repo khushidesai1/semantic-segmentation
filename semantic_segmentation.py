@@ -25,6 +25,8 @@ def apply_segmentation_dir(image_paths, dest_path):
 	"""
 	os.chdir('./awesome-semantic-segmentation-pytorch/scripts')
 	for path in image_paths:
+		if not os.path.isdir(dest_path):
+			dest_path = os.path.dirname(dest_path)
 		dest_path = join(dest_path, get_file_name(path) + "-seg" + get_file_extension(path))
 		outdir = ' --outdir ' + dest_path
 		img = ' --input-pic ' + path
