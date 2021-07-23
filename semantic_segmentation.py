@@ -24,9 +24,11 @@ def apply_segmentation_dir(image_paths, dest_path):
 		The path to the destination directory where the segmented images will be stored
 	"""
 	os.chdir('./awesome-semantic-segmentation-pytorch/scripts')
+	dest_path = join('../../', dest_path)
 	for path in image_paths:
 		if not os.path.isdir(dest_path):
 			dest_path = os.path.dirname(dest_path)
+		
 		dest_path = join(dest_path, get_file_name(path) + "-seg" + get_file_extension(path))
 		outdir = ' --outdir ' + dest_path
 		img = ' --input-pic ' + path
@@ -46,6 +48,7 @@ def apply_single_segmentation(img_path, dest_path, mask_path=None):
 		The path to the destination directory where the segmented image will be stored
 	"""
 	os.chdir('./awesome-semantic-segmentation-pytorch/scripts')
+	dest_path = join('../../', dest_path)
 	img = ' --input-pic ' + img_path
 	outdir = ' --outdir ' + dest_path
 	if not mask_path:
@@ -77,7 +80,7 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, m
 		The desired frame rate to conver the video to frame images
 	"""
 	run_id = generate_id()
-	dest_path = join("../../runs", run_id)
+	dest_path = join("./runs", run_id)
 	if not os.path.isdir(dest_path):
 		os.makedirs(dest_path)
 	if img_path: 
