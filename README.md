@@ -24,39 +24,39 @@ After the application gets the resulting segmented images, the program writes th
 Follow the below format to input a single image file and replace the path to the image with your own
 file path.
 ```
-python semantic-segmentation.py --img [path to image file]
+python semantic_segmentation.py --img [path to image file]
 
 # Example -- replace ./test-image.jpg with your own image path
-python semantic-segmentation.py --img ./test-image.jpg
+python semantic_segmentation.py --img ./test-image.jpg
 ```
 
 **Input a single image and obtain metrics**
 In order to obtain metrics on the evaluation result, pass in a Cityscapes mask .png image corresponding to a Cityscapes input image using the --mask flag.
 ```
-python semantic-segmentation.py --img [path to Cityscapes image] --mask [path to Cityscapes mask]
+python semantic_segmentation.py --img [path to Cityscapes image] --mask [path to Cityscapes mask]
 
 # Example -- replace ./test-image.png and ./test-mask.png with your own Cityscapes image and mask
-python semantic-segmentation.py --img ./test-image.png --mask ./test-mask.png
+python semantic_segmentation.py --img ./test-image.png --mask ./test-mask.png
 ```
 
 **Input a video**:
 Follow the below format to input a video file and replace the path to the video with your own file path.
 The frame rate at which the video will be converted to image frames can also be specified (for example, 0.03 is approximately 33 frames per second). If the frame rate is not specified, the program will use a default frame rate of 0.05 (20 fps).
 ```
-python semantic-segmentation.py --vid [path to video file] -r [frame rate in decimals]
+python semantic_segmentation.py --vid [path to video file] -r [frame rate in decimals]
 
 # Example -- replace ./test-vid.mp4 with your own video path and 0.02 with your own preferred frame rate
-python semantic-segmentation.py --vid ./test-vid.mp4 -r 0.02
+python semantic_segmentation.py --vid ./test-vid.mp4 -r 0.02
 ```
 
 **Input a folder of images**:
 Follow the below format to input a folder containing images and replace the path to the folder with your
 own folder path.
 ```
-python semantic-segmentation.py --flder [path to directory]
+python semantic_segmentation.py --dir [path to directory]
 
 # Example -- replace ./test-folder with your own folder path
-python semantic-segmentation --flder ./test-folder
+python semantic_segmentation.py --dir ./test-folder
 ```
 
 ### Output Format

@@ -79,15 +79,16 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, m
 	if not os.path.isdir(dest_path):
 		os.makedirs(dest_path)
 	if img_path: 
-		validate_img(img_path)
+		assert os.path.isfile(img_path)
 		print("Completed reading image:", img_path)
 		dest_path = join(dest_path, get_file_name(img_path) + "-seg" + get_file_extension(img_path))
 		apply_single_segmentation(img_path, dest_path, mask_path)
 		print("Completed segmentation evaluation. Result is saved as", dest_path)
 	if dir_path:
-		img_paths = validate_dir(dir_path)
-		for img_name in img_paths:
-			validate_img(join(dir_path, img_name))
+		assert os.path.isdir(dir_path)
+		img_paths = [join(dir_path, im) for im in os.listdir(dir_path)]
+		for path in img_paths:
+			assert os.path.isfile(path)
 		print("Completed reading images from directory:", dir_path)
 		apply_segmentation_dir(img_paths, dest_path)
 		print("Completed segmentation evaluation. Result is saved in", dest_path)
@@ -96,7 +97,8 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, m
 		vid_to_frames(vid_path, frames_dir, frame_rate)
 		frames_per_second = 1 / frame_rate
 		print("Completed converting video to frames at", frames_per_second, "frames per second")
-		frame_paths = validate_dir(frames_dir)
+		assert os.path.isdir(frames_dir)
+		frame_paths = [join(frames_dir, im) for im in os.listdir(frames_dir)]
 		dest_path = join(dest_path, get_file_name(vid_path) + "-seg" + get_file_extension(vid_path))
 		apply_segmentation_dir(frame_paths, dest_path)
 		print("Completed segmentation evaluation. Result is saved as", dest_path)
@@ -188,44 +190,6 @@ def get_frame(vidcap, sec, frames_dir):
 	if hasFrames:
 		cv2.imwrite(frames_dir + "/image" + str(sec) + ".jpg", img)
 	return hasFrames
-
-def validate_img(file_path):
-	"""
-	Checks whether the given file path corresponds to a valid image or not and whether
-	the file exists or not
-	
-	Parameters
-	----------
-	file_path: str
-		The path to the image file
-	
-	"""
-	try:
-		img = Image.open(file_path)
-	except:
-		print("Value Error:", file_path, "is not a valid image file")
-		sys.exit(1)
-
-def validate_dir(dir_path):
-	"""
-	Checks whether the given directory path corresponds to a valid directory or not.
-
-	Parameters
-	----------
-	dir_path: str
-		The path to the directory
-
-	Returns
-	-------
-	list of str
-		The list of strs representing each image file from the images within the directory path
-	
-	"""
-	try:
-		img_paths = os.listdir(dir_path)
-		return img_paths
-	except:
-		print("Invalid Argument:", dir_path, "is not a valid directory")
 
 def generate_id():
 	"""
