@@ -14,7 +14,7 @@ The model used in this semantic segmentation application is a PSPNet model that 
 
 The semantic-segmentation.py script is an image processing Python script that allows the user to input an image, a folder containing images or a video and feeds these into the trained neural network model to get a color coded overlay output. 
 
-The user can use the --img (input an image path), --vid (input a video path) and --flder (input a folder path) flags to specify the type of input you want the program to use. You can also use the -r flag with the --vid flag in order to specify the frame rate for the converted image frames. 
+The user can use the --img (input an image path), --vid (input a video path) and --flder (input a folder path) flags to specify the type of input you want the program to use. You can also use the -r flag with the --vid flag in order to specify the frame rate for the converted image frames. You can use the --mask flag with the --img flag in order to obtain metrics on an input image by passing in an additional mask image. (*Note: the input mask has to be one from the Cityscapes dataset*)
 
 After the application gets the resulting segmented images, the program writes these images to a folder within the semantic segmentation repository for the user to view. 
 
@@ -28,6 +28,15 @@ python semantic-segmentation.py --img [path to image file]
 
 # Example -- replace ./test-image.jpg with your own image path
 python semantic-segmentation.py --img ./test-image.jpg
+```
+
+**Input a single image and obtain metrics**
+In order to obtain metrics on the evaluation result, pass in a Cityscapes mask .png image corresponding to a Cityscapes input image using the --mask flag.
+```
+python semantic-segmentation.py --img [path to Cityscapes image] --mask [path to Cityscapes mask]
+
+# Example -- replace ./test-image.png and ./test-mask.png with your own Cityscapes image and mask
+python semantic-segmentation.py --img ./test-image.png --mask ./test-mask.png
 ```
 
 **Input a video**:
@@ -54,10 +63,10 @@ python semantic-segmentation --flder ./test-folder
 You can find all outputs to the program within the ./runs folder. Each run is given a random string code and the results of the segmentation is stored in these folders.
 
 **Image output**:
-The image outputs will be stored as: ./runs/[string code]/[image name]-seg.[image extension]
+The image outputs will be stored as: semantic-segmentation/runs/[string code]/[image name]-seg.[image extension]
 
 **Video output**:
-The video outputs will be stored as: ./runs/[string code]/[video name]-seg.[video extension]
+The video outputs will be stored as: semantic-segmentation/runs/[string code]/[video name]-seg.[video extension]
 
 **Folder output**:
 The folder containing image outputs will be stored within the following folder: ./runs/[string code]
