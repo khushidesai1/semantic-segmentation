@@ -83,7 +83,7 @@ if __name__ == '__main__':
     args.save_pred = True
     if args.save_pred:
         outpath = args.outdir
-        outdir = os.path.dirname(outpath)
+        outdir = os.path.dirname(outpath) 
         if not os.path.isdir(outdir):
             os.makedirs(outdir)
     logger = setup_logger("semantic_segmentation", args.log_dir, get_rank(),
