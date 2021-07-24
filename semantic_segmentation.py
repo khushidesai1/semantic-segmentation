@@ -128,20 +128,32 @@ def frames_to_vid(frames_dir_path, dest_path, frame_rate):
 		The frame rate that was used to break up the original video into frames	
 
 	"""
-	frame_arr = []
-	frames = os.listdir(frames_dir_path)
-	image_num = lambda x: float(get_file_name(x)[5:])
-	frames.sort(key=image_num)
-	for name in frames:
-		frame_path = join(frames_dir_path, name)
-		frame_image = cv2.imread(frame_path)
-		height, width, layers = frame_image.shape
-		size = (width, height)
-		frame_arr.append(frame_image)
-	out = cv2.VideoWriter(dest_path, cv2.VideoWriter_fourcc('m', 'p', '4','v'), frame_rate, size)
-	for image in frame_arr:
-		out.write(image)
-	out.release()
+	images = [img for img in os.listdir(frames_dir_path) if img.endswith(".png")]
+	images = sorted(images)
+	frame = cv2.imread(os.path.join(frames_dir_path, images[0]))
+	height, width, layers = frame.shape
+
+	video = cv2.VideoWriter(dest_path, 0, frame_rate, (width,height))
+
+	for image in images:
+	    video.write(cv2.imread(os.path.join(frames_dir_path, image)))
+
+	cv2.destroyAllWindows()
+	video.release()
+	# frame_arr = []
+	# frames = os.listdir(frames_dir_path)
+	# image_num = lambda x: float(get_file_name(x)[5:])
+	# frames.sort(key=image_num)
+	# for name in frames:
+	# 	frame_path = join(frames_dir_path, name)
+	# 	frame_image = cv2.imread(frame_path)
+	# 	height, width, layers = frame_image.shape
+	# 	size = (width, height)
+	# 	frame_arr.append(frame_image)
+	# out = cv2.VideoWriter(dest_path, cv2.VideoWriter_fourcc('m', 'p', '4','v'), frame_rate, size)
+	# for image in frame_arr:
+	# 	out.write(image)
+	# out.release()
 
 def vid_to_frames(vid_path, frames_dir, frame_rate):
 	"""
@@ -264,7 +276,7 @@ def parse_args():
 	flag_group.add_argument("--vid", help="Use this flag when passing in a video file path V")
 	flag_group.add_argument("--dir", help="Use this flag when passing in a dir path containing images D")
 	parser.add_argument("-r", help="Use this flag to specify the frame rate to convert the video to frame images",
-						default=0.05)
+						default=20)
 	parser.add_argument("--mask", help="Use this flag to specify the Cityscapes mask image associated with the input image", 
 						default=None)
 	return parser.parse_args()
