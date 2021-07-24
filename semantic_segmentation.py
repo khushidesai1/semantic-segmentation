@@ -33,6 +33,7 @@ def apply_segmentation_dir(image_paths, dest_path):
 		outdir = ' --outdir ' + dest_path
 		img = ' --input-pic ' + path
 		os.system('python eval_custom.py ' + MODEL + BACKBONE + DATASET + img + outdir)
+		
 	os.chdir('../..')
 
 def apply_single_segmentation(img_path, dest_path, mask_path=None):
@@ -99,15 +100,17 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, m
 		print("Completed segmentation evaluation. Result is saved in", dest_path)
 	if vid_path:
 		frames_dir = join('./', get_file_name(vid_path) + '-frames')
-		vid_to_frames(vid_path, frames_dir, frame_rate)
-		frames_per_second = 1 / frame_rate
-		print("Completed converting video to frames at", frames_per_second, "frames per second")
+		vid_to_frames(vid_path, frames_dir, 1 / frame_rate)
+		print("Completed converting video to frames at", frame_rate, "frames per second")
 		assert os.path.isdir(frames_dir)
-		frame_paths = [join(frames_dir, im) for im in os.listdir(frames_dir)]
+		frame_paths = [join('../../',frames_dir, im) for im in os.listdir(frames_dir)]
+		segmented_frames_dir = join(dest_path, get_file_name(vid_path) + '-seg-frames')
+		if not os.path.isdir(segmented_frames_dir):
+			os.makedirs(segmented_frames_dir)
 		dest_path = join(dest_path, get_file_name(vid_path) + "-seg" + get_file_extension(vid_path))
-		apply_segmentation_dir(frame_paths, dest_path)
+		apply_segmentation_dir(frame_paths, segmented_frames_dir)
+		frames_to_vid(frames_dir, dest_path, frame_rate)
 		print("Completed segmentation evaluation. Result is saved as", dest_path)
-		frames_to_vid(frames_dir, dest_path, frames_per_second)
 	
 def frames_to_vid(frames_dir_path, dest_path, frame_rate):
 	"""
@@ -193,7 +196,7 @@ def get_frame(vidcap, sec, frames_dir):
 	vidcap.set(cv2.CAP_PROP_POS_MSEC, sec * 1000)
 	hasFrames, img = vidcap.read()
 	if hasFrames:
-		cv2.imwrite(frames_dir + "/image" + str(sec) + ".jpg", img)
+		cv2.imwrite(frames_dir + "/image" + str(sec) + ".png", img)
 	return hasFrames
 
 def generate_id():

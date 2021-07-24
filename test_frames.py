@@ -35,7 +35,7 @@ def frames_to_vid(frames_dir_path, dest_path, frame_rate):
 
 def frames_to_vid2():
 	image_folder = frames_folder
-	video_name = 'video.avi'
+	video_name = 'video-seg.avi'
 
 	images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
 	images = sorted(images)
@@ -67,7 +67,7 @@ def get_file_name(file_path):
 	"""
 	return os.path.splitext(os.path.split(file_path)[1])[0]
 
-frames_folder = '/home/khushi/Desktop/leftImg8bit/demoVideo/stuttgart_00'
+frames_folder = '/home/khushi/Desktop/semantic-segmentation/runs/Oz7UU8VD'
 fps = 30
 #frames_to_vid(frames_folder, '~/Desktop/citys-video.mp4', fps)
 frames_to_vid2()
