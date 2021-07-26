@@ -32,7 +32,8 @@ def apply_segmentation_dir(image_paths, dest_path):
 		dest_path = join(dest_path, get_file_name(path) + "-seg" + get_file_extension(path))
 		outdir = ' --outdir ' + dest_path
 		img = ' --input-pic ' + path
-		os.system('python eval_custom.py ' + MODEL + BACKBONE + DATASET + img + outdir)
+		# os.system('python eval_custom.py ' + MODEL + BACKBONE + DATASET + img + outdir)
+		os.system('python -m torch.distributed.launch --nproc_per_node=2 eval_custom.py'+ MODEL + BACKBONE + DATASET + img + outdir) 
 		
 	os.chdir('../..')
 
@@ -99,7 +100,7 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, m
 		apply_segmentation_dir(img_paths, dest_path)
 		print("Completed segmentation evaluation. Result is saved in", dest_path)
 	if vid_path:
-		frames_dir = join('./', get_file_name(vid_path) + '-frames')
+		frames_dir = join(dest_path, get_file_name(vid_path) + '-frames')
 		vid_to_frames(vid_path, frames_dir, 1 / frame_rate)
 		print("Completed converting video to frames at", frame_rate, "frames per second")
 		assert os.path.isdir(frames_dir)
@@ -109,7 +110,7 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, m
 			os.makedirs(segmented_frames_dir)
 		dest_path = join(dest_path, get_file_name(vid_path) + "-seg" + get_file_extension(vid_path))
 		apply_segmentation_dir(frame_paths, segmented_frames_dir)
-		frames_to_vid(frames_dir, dest_path, frame_rate)
+		frames_to_vid(segmented_frames_dir, dest_path, frame_rate)
 		print("Completed segmentation evaluation. Result is saved as", dest_path)
 	
 def frames_to_vid(frames_dir_path, dest_path, frame_rate):
@@ -129,7 +130,9 @@ def frames_to_vid(frames_dir_path, dest_path, frame_rate):
 
 	"""
 	images = [img for img in os.listdir(frames_dir_path) if img.endswith(".png")]
-	images = sorted(images)
+	# images = sorted(images)
+	image_num = lambda x: float(get_file_name(x)[5:])
+	images.sort(key=image_num)
 	frame = cv2.imread(os.path.join(frames_dir_path, images[0]))
 	height, width, layers = frame.shape
 
