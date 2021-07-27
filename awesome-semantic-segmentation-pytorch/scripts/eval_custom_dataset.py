@@ -22,7 +22,7 @@ from posixpath import join
 
 from train import parse_args
 
-class CustomEvaluator(object):
+class CustomDatasetEvaluator(object):
     def __init__(self, args):
         self.args = args
         self.device = torch.device(args.device)
@@ -62,7 +62,8 @@ class CustomEvaluator(object):
 
                 predict = pred.squeeze(0)
                 mask = get_color_pallete(predict, self.args.dataset)
-                mask.save(join(outpath, filename + '-seg.png'))
+                dest_name = os.path.splitext(filename[0])[0]
+                mask.save(join(outpath, dest_name + '-seg.png'))
         synchronize()
         logger.info('Validation complete')
 
@@ -88,6 +89,6 @@ if __name__ == '__main__':
             os.makedirs(outdir)
     logger = setup_logger("semantic_segmentation", args.log_dir, get_rank(),
                           filename='{}_{}_{}_log.txt'.format(args.model, args.backbone, args.dataset), mode='a+')
-    evaluator = CustomEvaluator(args)
+    evaluator = CustomDatasetEvaluator(args)
     evaluator.eval()
     torch.cuda.empty_cache()

@@ -6,6 +6,7 @@ import argparse
 import cv2
 import random
 import string
+import re
 
 MODEL = ' --model psp'
 BACKBONE = ' --backbone resnet50'
@@ -133,7 +134,8 @@ def frames_to_vid(frames_dir_path, dest_path, frame_rate):
 
 	"""
 	images = [img for img in os.listdir(frames_dir_path) if img.endswith(".png")]
-	images = sorted(images)
+	image_num = lambda x: int(re.findall(r"[\d]+", x)[0])
+	images = sorted(images, key=image_num)
 	frame = cv2.imread(os.path.join(frames_dir_path, images[0]))
 	height, width, layers = frame.shape
 
@@ -169,10 +171,10 @@ def vid_to_frames(vid_path, frames_dir, frame_rate):
 	vidcap = cv2.VideoCapture(vid_path)
 	sec = 0
 	num = 0
-	success = get_frame(vidcap, sec, frames_dir)
+	success = get_frame(vidcap, sec, num, frames_dir)
 	while success:
 		sec = round(sec + frame_rate, 2)
-		success = get_frame(vidcap, num, frames_dir)
+		success = get_frame(vidcap, sec, num, frames_dir)
 		num += 1
 	return frames_dir
 

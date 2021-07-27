@@ -7,7 +7,7 @@ from PIL import Image
 from .segbase import SegmentationDataset
 
 
-class CustomSegmentation(SegmentationDataset):
+class CustomDatasetSegmentation(SegmentationDataset):
     """Custom Semantic Segmentation Dataset.
 
     Parameters
@@ -37,7 +37,7 @@ class CustomSegmentation(SegmentationDataset):
     NUM_CLASS = 19
 
     def __init__(self, custom_dataset=None, root='', split='train', mode='testval', transform=None, **kwargs):
-        super(CustomSegmentation, self).__init__(root, split, mode, transform, **kwargs)
+        super(CustomDatasetSegmentation, self).__init__(root, split, mode, transform, **kwargs)
         images_folder = custom_dataset
         self.images = [join(images_folder, path) for path in os.listdir(images_folder)]
         assert len(self.images) > 0
@@ -69,4 +69,4 @@ class CustomSegmentation(SegmentationDataset):
         return 0
 
 if __name__ == '__main__':
-    dataset = CustomSegmentation()
+    dataset = CustomDatasetSegmentation()
