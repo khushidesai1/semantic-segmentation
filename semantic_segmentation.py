@@ -11,7 +11,7 @@ MODEL = ' --model psp'
 BACKBONE = ' --backbone resnet50'
 DATASET = ' --dataset citys'
 
-def apply_segmentation_dir(image_paths, dest_path):
+def apply_segmentation_dir(dir_path, dest_path):
 	"""
 	Takes in image paths from a directory and feeds each image into the trained Tramac neural 
 	network model. Writes the resulting overlays for each image to a specified directory.
@@ -25,15 +25,18 @@ def apply_segmentation_dir(image_paths, dest_path):
 	"""
 	os.chdir('./awesome-semantic-segmentation-pytorch/scripts')
 	dest_path = join('../../', dest_path)
-	for path in image_paths:
-		if not os.path.isdir(dest_path):
-			dest_path = os.path.dirname(dest_path)
+	outdir = ' --outdir ' + dest_path
+	input_folder = ' --custom-dataset ' + dir_path
+	os.system('python eval_custom_dataset.py' + MODEL + BACKBONE + DATASET + input_folder + outdir)
+	# for path in image_paths:
+	# 	if not os.path.isdir(dest_path):
+	# 		dest_path = os.path.dirname(dest_path)
 		
-		dest_path = join(dest_path, get_file_name(path) + "-seg" + get_file_extension(path))
-		outdir = ' --outdir ' + dest_path
-		img = ' --input-pic ' + path
-		# os.system('python eval_custom.py ' + MODEL + BACKBONE + DATASET + img + outdir)
-		os.system('python -m torch.distributed.launch --nproc_per_node=2 eval_custom.py'+ MODEL + BACKBONE + DATASET + img + outdir) 
+	# 	dest_path = join(dest_path, get_file_name(path) + "-seg" + get_file_extension(path))
+	# 	outdir = ' --outdir ' + dest_path
+	# 	img = ' --input-pic ' + path
+	# 	# os.system('python eval_custom.py ' + MODEL + BACKBONE + DATASET + img + outdir)
+	# 	os.system('python -m torch.distributed.launch --nproc_per_node=2 eval_custom.py'+ MODEL + BACKBONE + DATASET + img + outdir) 
 		
 	os.chdir('../..')
 
@@ -93,23 +96,23 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, m
 		print("Completed segmentation evaluation. Result is saved as", dest_path)
 	if dir_path:
 		assert os.path.isdir(dir_path)
-		img_paths = [join(dir_path, im) for im in os.listdir(dir_path)]
-		for path in img_paths:
-			assert os.path.isfile(path)
+		# img_paths = [join(dir_path, im) for im in os.listdir(dir_path)]
+		# for path in img_paths:
+		# 	assert os.path.isfile(path)
 		print("Completed reading images from directory:", dir_path)
-		apply_segmentation_dir(img_paths, dest_path)
+		apply_segmentation_dir(dir_path, dest_path)
 		print("Completed segmentation evaluation. Result is saved in", dest_path)
 	if vid_path:
 		frames_dir = join(dest_path, get_file_name(vid_path) + '-frames')
 		vid_to_frames(vid_path, frames_dir, 1 / frame_rate)
 		print("Completed converting video to frames at", frame_rate, "frames per second")
 		assert os.path.isdir(frames_dir)
-		frame_paths = [join('../../',frames_dir, im) for im in os.listdir(frames_dir)]
+		# frame_paths = [join('../../',frames_dir, im) for im in os.listdir(frames_dir)]
 		segmented_frames_dir = join(dest_path, get_file_name(vid_path) + '-seg-frames')
 		if not os.path.isdir(segmented_frames_dir):
 			os.makedirs(segmented_frames_dir)
 		dest_path = join(dest_path, get_file_name(vid_path) + "-seg" + get_file_extension(vid_path))
-		apply_segmentation_dir(frame_paths, segmented_frames_dir)
+		apply_segmentation_dir(join('../../',frames_dir), segmented_frames_dir)
 		frames_to_vid(segmented_frames_dir, dest_path, frame_rate)
 		print("Completed segmentation evaluation. Result is saved as", dest_path)
 	
@@ -130,9 +133,7 @@ def frames_to_vid(frames_dir_path, dest_path, frame_rate):
 
 	"""
 	images = [img for img in os.listdir(frames_dir_path) if img.endswith(".png")]
-	# images = sorted(images)
-	image_num = lambda x: float(get_file_name(x)[5:])
-	images.sort(key=image_num)
+	images = sorted(images)
 	frame = cv2.imread(os.path.join(frames_dir_path, images[0]))
 	height, width, layers = frame.shape
 
@@ -143,20 +144,6 @@ def frames_to_vid(frames_dir_path, dest_path, frame_rate):
 
 	cv2.destroyAllWindows()
 	video.release()
-	# frame_arr = []
-	# frames = os.listdir(frames_dir_path)
-	# image_num = lambda x: float(get_file_name(x)[5:])
-	# frames.sort(key=image_num)
-	# for name in frames:
-	# 	frame_path = join(frames_dir_path, name)
-	# 	frame_image = cv2.imread(frame_path)
-	# 	height, width, layers = frame_image.shape
-	# 	size = (width, height)
-	# 	frame_arr.append(frame_image)
-	# out = cv2.VideoWriter(dest_path, cv2.VideoWriter_fourcc('m', 'p', '4','v'), frame_rate, size)
-	# for image in frame_arr:
-	# 	out.write(image)
-	# out.release()
 
 def vid_to_frames(vid_path, frames_dir, frame_rate):
 	"""
@@ -181,13 +168,15 @@ def vid_to_frames(vid_path, frames_dir, frame_rate):
 		os.mkdir(frames_dir)
 	vidcap = cv2.VideoCapture(vid_path)
 	sec = 0
+	num = 0
 	success = get_frame(vidcap, sec, frames_dir)
 	while success:
 		sec = round(sec + frame_rate, 2)
-		success = get_frame(vidcap, sec, frames_dir)
+		success = get_frame(vidcap, num, frames_dir)
+		num += 1
 	return frames_dir
 
-def get_frame(vidcap, sec, frames_dir):
+def get_frame(vidcap, sec, num, frames_dir):
 	"""
 	Gets a single frame using the VideoCapture object and saves the frame image to the
 	directory ./[video name]-frames/
@@ -198,6 +187,8 @@ def get_frame(vidcap, sec, frames_dir):
 		The VideoCapture object read from the video file path
 	sec: double
 		The second value of the video to capture
+	num: int
+		The frame number
 	frames_dir: str
 		The path to the directory in which the video frames will be stored
 
@@ -211,7 +202,7 @@ def get_frame(vidcap, sec, frames_dir):
 	vidcap.set(cv2.CAP_PROP_POS_MSEC, sec * 1000)
 	hasFrames, img = vidcap.read()
 	if hasFrames:
-		cv2.imwrite(frames_dir + "/image" + str(sec) + ".png", img)
+		cv2.imwrite(frames_dir + "/image" + str(num) + ".png", img)
 	return hasFrames
 
 def generate_id():
