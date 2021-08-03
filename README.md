@@ -18,6 +18,14 @@ The user can use the --img (input an image path), --vid (input a video path) and
 
 After the application gets the resulting segmented images, the program writes these images to a folder within the semantic segmentation repository for the user to view. 
 
+### Set Up Instructions
+**Dataset Set Up**: The script looks for the dataset from a specific directory within the repository. In order for the scripts to access this dataset, the dataset needs to be available within the following directory: ./awesome-semantic-segmentation-pytorch/datasets/[name of dataset]. The supported datasets with their appropriate folder names are: Cityscapes (citys) and Pascal Voc (voc).
+
+Example directories for Cityscapes:
+./awesome-semantic-segmentation-pytorch/datasets/citys/gtFine and ./awesome-semantic-segmentation-pytorch/datasets/citys/leftImg8bit
+
+**Pre-trained Models**: In order to perform evaluation, the scripts need to be able to find a pre-trained model file. The script looks for these pre-trained models in the folder ~/.torch/models/. The repository contains a directory ./models containing some pre-trained models trained with different backbones and with the Cityscape dataset. You can also train your own models with your own dataset using the documentation under the awesome-semantic-segmentation-pytorch repository. 
+
 ### Usage and Examples
 
 **Input a single image**:
@@ -30,7 +38,7 @@ python semantic_segmentation.py --img [path to image file]
 python semantic_segmentation.py --img ./test-image.jpg
 ```
 
-**Input a single image and obtain metrics**
+**Input a single image and obtain metrics**:
 In order to obtain metrics on the evaluation result, pass in a Cityscapes mask .png image corresponding to a Cityscapes input image using the --mask flag.
 ```
 python semantic_segmentation.py --img [path to Cityscapes image] --mask [path to Cityscapes mask]
