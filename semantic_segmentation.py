@@ -1,6 +1,4 @@
 from posixpath import join
-from PIL import Image
-import sys
 import os
 import argparse
 import cv2
@@ -12,7 +10,7 @@ MODEL = ' --model psp'
 BACKBONE = ' --backbone resnet50'
 DATASET = ' --dataset citys'
 
-def apply_segmentation_dir(dir_path, dest_path):
+def apply_segmentation_dir(dir_path, dest_path, ngpus=1):
 	"""
 	Takes in image paths from a directory and feeds each image into the trained Tramac neural 
 	network model. Writes the resulting overlays for each image to a specified directory.
@@ -23,25 +21,21 @@ def apply_segmentation_dir(dir_path, dest_path):
 		The list of paths to the images within a certain directory
 	dest_path: str
 		The path to the destination directory where the segmented images will be stored
+	ngpus: int, optional
+		The number of GPUs the user wants to utilize for evaluation
 	"""
 	os.chdir('./awesome-semantic-segmentation-pytorch/scripts')
 	dest_path = join('../../', dest_path)
 	outdir = ' --outdir ' + dest_path
 	input_folder = ' --custom-dataset ' + dir_path
-	os.system('python eval_custom_dataset.py' + MODEL + BACKBONE + DATASET + input_folder + outdir)
-	# for path in image_paths:
-	# 	if not os.path.isdir(dest_path):
-	# 		dest_path = os.path.dirname(dest_path)
-		
-	# 	dest_path = join(dest_path, get_file_name(path) + "-seg" + get_file_extension(path))
-	# 	outdir = ' --outdir ' + dest_path
-	# 	img = ' --input-pic ' + path
-	# 	# os.system('python eval_custom.py ' + MODEL + BACKBONE + DATASET + img + outdir)
-	# 	os.system('python -m torch.distributed.launch --nproc_per_node=2 eval_custom.py'+ MODEL + BACKBONE + DATASET + img + outdir) 
-		
+	if ngpus > 1:
+		os.system('export NGPUS=' + str(ngpus))
+		os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom_dataset.py' + MODEL + BACKBONE + DATASET + input_folder + outdir)
+	else:
+		os.system('python eval_custom_dataset.py' + MODEL + BACKBONE + DATASET + input_folder + outdir)
 	os.chdir('../..')
 
-def apply_single_segmentation(img_path, dest_path, mask_path=None):
+def apply_single_segmentation(img_path, dest_path, mask_path=None, ngpus=1):
 	"""
 	Takes in a single image path and feeds the image into the trained Tramac neural network model.
 	Writes the resulting overlay image to the specified directory path. 
@@ -52,19 +46,30 @@ def apply_single_segmentation(img_path, dest_path, mask_path=None):
 		The path to the given image
 	dest_path: str
 		The path to the destination directory where the segmented image will be stored
+	mask_path: str
+		The path to the mask image for performing metric evaluation
+	ngpus: int, optional
+		The number of GPUs the user wants to utilize for evaluation
 	"""
 	os.chdir('./awesome-semantic-segmentation-pytorch/scripts')
 	dest_path = join('../../', dest_path)
 	img = ' --input-pic ' + img_path
 	outdir = ' --outdir ' + dest_path
-	if not mask_path:
-		os.system('python eval_custom.py' + MODEL + BACKBONE + DATASET + img + outdir)
+	if ngpus > 1:
+		os.system('export NGPUS=' + str(ngpus))
+		if not mask_path:
+			os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom.py' + MODEL + BACKBONE + DATASET + img + outdir)
+		else:
+			os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom_metric.py' + MODEL + BACKBONE + DATASET + img + outdir + mask)
 	else:
-		mask = ' --input-gt ' + mask_path
-		os.system('python eval_custom_metric.py' + MODEL + BACKBONE + DATASET + img + outdir + mask)
+		if not mask_path:
+			os.system('python eval_custom.py' + MODEL + BACKBONE + DATASET + img + outdir)
+		else:
+			mask = ' --input-gt ' + mask_path
+			os.system('python eval_custom_metric.py' + MODEL + BACKBONE + DATASET + img + outdir + mask)
 	os.chdir('../..')
 					
-def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, mask_path=None):
+def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, mask_path=None, ngpus=1):
 	"""
 	Reads the given image, images in the given directory, or image frames from the given video.
 	Based on the format of the input, processes the image(s) by applying segmentation to each
@@ -84,6 +89,10 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, m
 		The path to the given video
 	frame_rate: double
 		The desired frame rate to conver the video to frame images
+	mask_path: str, optional
+		The path to the mask image for performing metric evaluation
+	ngpus: int, optional
+		The number of GPUs the user wants to utilize for evaluation with the default as 1
 	"""
 	run_id = generate_id()
 	dest_path = join("./runs", run_id)
@@ -92,28 +101,32 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, m
 	if img_path: 
 		assert os.path.isfile(img_path)
 		print("Completed reading image:", img_path)
+		
 		dest_path = join(dest_path, get_file_name(img_path) + "-seg" + get_file_extension(img_path))
-		apply_single_segmentation(img_path, dest_path, mask_path)
+		apply_single_segmentation(img_path, dest_path, mask_path, ngpus)
+		
 		print("Completed segmentation evaluation. Result is saved as", dest_path)
 	if dir_path:
 		assert os.path.isdir(dir_path)
-		# img_paths = [join(dir_path, im) for im in os.listdir(dir_path)]
-		# for path in img_paths:
-		# 	assert os.path.isfile(path)
 		print("Completed reading images from directory:", dir_path)
-		apply_segmentation_dir(dir_path, dest_path)
+
+		apply_segmentation_dir(dir_path, dest_path, ngpus)
+		
 		print("Completed segmentation evaluation. Result is saved in", dest_path)
 	if vid_path:
 		frames_dir = join(dest_path, get_file_name(vid_path) + '-frames')
 		vid_to_frames(vid_path, frames_dir, 1 / frame_rate)
+		
 		print("Completed converting video to frames at", frame_rate, "frames per second")
 		assert os.path.isdir(frames_dir)
-		# frame_paths = [join('../../',frames_dir, im) for im in os.listdir(frames_dir)]
+		
 		segmented_frames_dir = join(dest_path, get_file_name(vid_path) + '-seg-frames')
 		if not os.path.isdir(segmented_frames_dir):
 			os.makedirs(segmented_frames_dir)
 		dest_path = join(dest_path, get_file_name(vid_path) + "-seg" + get_file_extension(vid_path))
-		apply_segmentation_dir(join('../../',frames_dir), segmented_frames_dir)
+		
+		apply_segmentation_dir(join('../../',frames_dir), segmented_frames_dir, ngpus)
+		
 		frames_to_vid(segmented_frames_dir, dest_path, frame_rate)
 		print("Completed segmentation evaluation. Result is saved as", dest_path)
 	
@@ -275,6 +288,8 @@ def parse_args():
 						default=20)
 	parser.add_argument("--mask", help="Use this flag to specify the Cityscapes mask image associated with the input image", 
 						default=None)
+	parser.add_argument("--ngpus", help="Use this flag to specify how many GPUs you would like the system to utilize",
+						default=1)
 	return parser.parse_args()
 
 def main():
@@ -287,10 +302,13 @@ def main():
 	video_path = input_args.vid
 	dir_path = input_args.dir
 	mask_path = input_args.mask
+	gpus = None
 	rate = None
 	if input_args.r:
 		rate = float(input_args.r)
-	process_input(img_path=image_path, dir_path=dir_path, vid_path=video_path, frame_rate=rate, mask_path=mask_path)
+	if input_args.ngpus:
+		gpus = int(input_args.ngpus)
+	process_input(img_path=image_path, dir_path=dir_path, vid_path=video_path, frame_rate=rate, mask_path=mask_path, ngpus=gpus)
 
 if __name__ == "__main__":
 	main()

@@ -2,11 +2,32 @@
 
 This project leverages 2 RTX A6000 GPUs and Tramac's [awesome-semantic-segmentation-pytorch](https://github.com/Tramac/awesome-semantic-segmentation-pytorch) library to place color coded overlays onto objects given the input of an image view from a car's dashboard.
 
-This project has 2 main sections:
-* Semantic Segmentation Script
+This project has 3 main sections:
+* Semantic Segmentation Training
+* Semantic Segmentation Evaluation Script
 * Image Differential Generator
 
-## Semantic Segmentation Script
+### Set Up Instructions
+**Dataset Set Up**: This program uses the Cityscapes dataset and the dataset needs to be set up within the system in order for the scripts to use it. You can install the leftImg8bit_trainvaltest.zip (11GB) dataset from the [Cityscapes website](https://www.cityscapes-dataset.com/login/) along with it's ground truth dataset, gtFine_trainvaltest.zip (241MB). In order to ensure that the folders are correctly placed, follow the directory structure below:
+```
+./awesome-semantic-segmentation-pytorch
+|-- datasets
+|   |-- citys
+|   |   |-- leftImg8bit
+|   |   |   |-- train
+|   |   |   |-- val
+|   |   |   |-- test
+|   |   |-- gtFine
+```
+
+## Semantic Segmentation Training
+**Set Up Training**: In order to set up the training component, run the following command.
+```
+python setup.py
+```
+WRITE UP HOW TO PERFORM TRAINING AFTER SCRIPT IS WRITTEN
+
+## Semantic Segmentation Evaluation Script
 
 ### Segmentation Script Overview
 
@@ -17,14 +38,6 @@ The semantic-segmentation.py script is an image processing Python script that al
 The user can use the --img (input an image path), --vid (input a video path) and --flder (input a folder path) flags to specify the type of input you want the program to use. You can also use the -r flag with the --vid flag in order to specify the frame rate for the converted image frames. You can use the --mask flag with the --img flag in order to obtain metrics on an input image by passing in an additional mask image. (*Note: the input mask has to be one from the Cityscapes dataset*)
 
 After the application gets the resulting segmented images, the program writes these images to a folder within the semantic segmentation repository for the user to view. 
-
-### Set Up Instructions
-**Dataset Set Up**: The script looks for the dataset from a specific directory within the repository. In order for the scripts to access this dataset, the dataset needs to be available within the following directory: ./awesome-semantic-segmentation-pytorch/datasets/[name of dataset]. The supported datasets with their appropriate folder names are: Cityscapes (citys) and Pascal Voc (voc).
-
-Example directories for Cityscapes:
-./awesome-semantic-segmentation-pytorch/datasets/citys/gtFine and ./awesome-semantic-segmentation-pytorch/datasets/citys/leftImg8bit
-
-**Pre-trained Models**: In order to perform evaluation, the scripts need to be able to find a pre-trained model file. The script looks for these pre-trained models in the folder ~/.torch/models/. The repository contains a directory ./models containing some pre-trained models trained with different backbones and with the Cityscape dataset. You can also train your own models with your own dataset using the documentation under the awesome-semantic-segmentation-pytorch repository. 
 
 ### Usage and Examples
 

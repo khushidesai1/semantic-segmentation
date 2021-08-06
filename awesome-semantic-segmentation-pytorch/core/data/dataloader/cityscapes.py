@@ -39,7 +39,6 @@ class CitySegmentation(SegmentationDataset):
 
     def __init__(self, root='../datasets/citys', split='train', mode=None, transform=None, **kwargs):
         super(CitySegmentation, self).__init__(root, split, mode, transform, **kwargs)
-        # self.root = os.path.join(root, self.BASE_DIR)
         assert os.path.exists(self.root), "Please setup the dataset using ../datasets/cityscapes.py"
         self.images, self.mask_paths = _get_city_pairs(self.root, self.split)
         assert (len(self.images) == len(self.mask_paths))
@@ -56,7 +55,6 @@ class CitySegmentation(SegmentationDataset):
         self._mapping = np.array(range(-1, len(self._key) - 1)).astype('int32')
 
     def _class_to_index(self, mask):
-        # assert the value
         values = np.unique(mask)
         for value in values:
             assert (value in self._mapping)
@@ -70,7 +68,6 @@ class CitySegmentation(SegmentationDataset):
                 img = self.transform(img)
             return img, os.path.basename(self.images[index])
         mask = Image.open(self.mask_paths[index])
-        # synchrosized transform
         if self.mode == 'train':
             img, mask = self._sync_transform(img, mask)
         elif self.mode == 'val':
@@ -78,7 +75,6 @@ class CitySegmentation(SegmentationDataset):
         else:
             assert self.mode == 'testval'
             img, mask = self._img_transform(img), self._mask_transform(mask)
-        # general resize, normalize and toTensor
         if self.transform is not None:
             img = self.transform(img)
         return img, mask, os.path.basename(self.images[index])
