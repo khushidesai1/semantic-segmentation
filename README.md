@@ -25,13 +25,28 @@ This project has 3 main sections:
 ```
 python setup.py
 ```
-WRITE UP HOW TO PERFORM TRAINING AFTER SCRIPT IS WRITTEN
+### Semantic Segmentation Model Training
+
+In order to perform semantic segmentation, the program looks for a pre-trained model within the ~/.torch/models folder
+in the system the user is using. This folder is only created once a model is trained.
+
+### Usage and Examples
+
+Follow the below general format to perform training using a chosen model, backbone and the Cityscapes dataset.
+```
+python train.py --model [ model ] --backbone [ backbone ] --lr [ loss rate ] --epochs [ epochs ] --ngpus [ number of GPUS to use ]
+
+Example using PSPNet model and ResNet50 backbone
+python train.py --model psp --backbone resnet50 --lr 0.0001 --epochs 500 --ngpus 4
+```
 
 ## Semantic Segmentation Evaluation Script
 
 ### Segmentation Script Overview
 
-The model used in this semantic segmentation application is a PSPNet model that is trained using a backbone of Resnet50 for 2500 epochs. 
+The default model used in this semantic segmentation application is a PSPNet model that is trained using a backbone of Resnet50.
+
+See the **Usage and Examples** section to process input dash cam images using a custom model and backbone.
 
 The semantic-segmentation.py script is an image processing Python script that allows the user to input an image, a folder containing images or a video and feeds these into the trained neural network model to get a color coded overlay output. 
 
@@ -78,6 +93,24 @@ python semantic_segmentation.py --dir [path to directory]
 
 # Example -- replace ./test-folder with your own folder path
 python semantic_segmentation.py --dir ./test-folder
+```
+
+**Evaluating using multi-GPU**:
+You can use multi-GPU evaluation by using the above commands and adding a flag to input the number of GPUs.
+```
+python semantic_segmentation.py --dir ./test-folder --ngpus [ number of GPUS ]
+
+Example using 4 GPUs for evaluation
+python semantic_segmentation.py --dir ./test-folder --ngpus 4
+```
+
+**Evaluating on custom model and backbone**:
+You can perform semantic segmentation using a custom model and backbone based on your pre-trained model.
+```
+python semantic_segmentation.py --dir ./test-folder --model [ model name ] --backbone [ backbone name ]
+
+Example using FCN23s model and ResNet101 backbone
+python semantic_segmentation.py --dir ./test-folder --model fcn32s  --backbone resnet101
 ```
 
 ### Output Format

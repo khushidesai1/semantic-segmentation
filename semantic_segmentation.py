@@ -6,17 +6,21 @@ import random
 import string
 import re
 
-MODEL = ' --model psp'
-BACKBONE = ' --backbone resnet50'
+MODEL = ' --model '
+BACKBONE = ' --backbone '
 DATASET = ' --dataset citys'
 
-def apply_segmentation_dir(dir_path, dest_path, ngpus=1):
+def apply_segmentation_dir(model, backbone, dir_path, dest_path, ngpus=1):
 	"""
 	Takes in image paths from a directory and feeds each image into the trained Tramac neural 
 	network model. Writes the resulting overlays for each image to a specified directory.
 	
 	Parameters
 	----------
+	model: str
+		The model to use to perform evaluation
+	backbone: str
+		The backbone to use to perform evaluation
 	image_paths: list of strs
 		The list of paths to the images within a certain directory
 	dest_path: str
@@ -28,20 +32,25 @@ def apply_segmentation_dir(dir_path, dest_path, ngpus=1):
 	dest_path = join('../../', dest_path)
 	outdir = ' --outdir ' + dest_path
 	input_folder = ' --custom-dataset ' + dir_path
+	parameters = MODEL + model + BACKBONE + backbone + DATASET + input_folder + outdir
 	if ngpus > 1:
 		os.system('export NGPUS=' + str(ngpus))
-		os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom_dataset.py' + MODEL + BACKBONE + DATASET + input_folder + outdir)
+		os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom_dataset.py' + parameters)
 	else:
-		os.system('python eval_custom_dataset.py' + MODEL + BACKBONE + DATASET + input_folder + outdir)
+		os.system('python eval_custom_dataset.py' + parameters)
 	os.chdir('../..')
 
-def apply_single_segmentation(img_path, dest_path, mask_path=None, ngpus=1):
+def apply_single_segmentation(model, backbone, img_path, dest_path, mask_path=None, ngpus=1):
 	"""
 	Takes in a single image path and feeds the image into the trained Tramac neural network model.
 	Writes the resulting overlay image to the specified directory path. 
 
 	Parameters
 	----------
+	model: str
+		The model to use to perform evaluation
+	backbone: str
+		The model to use to perform evaluation
 	img_path: str
 		The path to the given image
 	dest_path: str
@@ -55,21 +64,24 @@ def apply_single_segmentation(img_path, dest_path, mask_path=None, ngpus=1):
 	dest_path = join('../../', dest_path)
 	img = ' --input-pic ' + img_path
 	outdir = ' --outdir ' + dest_path
+	mask = ' --input-gt ' + mask_path
+	parameters = MODEL + model + BACKBONE + backbone + DATASET + img + outdir
+	mask_parameters = MODEL + model + BACKBONE + backbone + DATASET + img + outdir + mask
 	if ngpus > 1:
 		os.system('export NGPUS=' + str(ngpus))
 		if not mask_path:
-			os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom.py' + MODEL + BACKBONE + DATASET + img + outdir)
+			os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom.py' + parameters)
 		else:
-			os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom_metric.py' + MODEL + BACKBONE + DATASET + img + outdir + mask)
+			os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom_metric.py' + mask_parameters)
 	else:
 		if not mask_path:
-			os.system('python eval_custom.py' + MODEL + BACKBONE + DATASET + img + outdir)
+			os.system('python eval_custom.py' + parameters)
 		else:
-			mask = ' --input-gt ' + mask_path
-			os.system('python eval_custom_metric.py' + MODEL + BACKBONE + DATASET + img + outdir + mask)
+			os.system('python eval_custom_metric.py' + mask_parameters)
 	os.chdir('../..')
 					
-def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, mask_path=None, ngpus=1):
+def process_input(model='psp', backbone='resnet50', img_path=None, dir_path=None, 
+				vid_path=None, frame_rate=0.5, mask_path=None, ngpus=1):
 	"""
 	Reads the given image, images in the given directory, or image frames from the given video.
 	Based on the format of the input, processes the image(s) by applying segmentation to each
@@ -81,6 +93,10 @@ def process_input(img_path=None, dir_path=None, vid_path=None, frame_rate=0.5, m
 
 	Parameters
 	----------
+	model: str, optional
+		The model to perform evaluation, with the default being PSPNet
+	backbone: str, optional
+		The backbone to perform evaluation, with the default being ResNet50
 	img_path: str, optional
 		The path to the given image
 	dir_path: str, optional
@@ -266,7 +282,7 @@ def get_file_extension(file_path):
 
 def parse_args():
 	"""
-	Builds a parser with 3 flags to accept a single image, a dir of images and a video file.
+	Builds a parser with flags to accept a single image, a dir of images and a video file.
 	Parser ensures that at least one of the arguments is provided and that not more than one of them
 	is provided in the terminal. Parser includes a description of how to use the flags and a help
 	description. 
@@ -281,15 +297,19 @@ def parse_args():
 		description='Process images using trained semantic segmentation model.',
 		usage='semantic_segmentation.py [ --img | --vid | --dir ] [ image path I | video path V | directory path D ]')
 	flag_group = parser.add_mutually_exclusive_group(required=True)
-	flag_group.add_argument("--img", help="Use this flag when passing in an image file path I")
-	flag_group.add_argument("--vid", help="Use this flag when passing in a video file path V")
-	flag_group.add_argument("--dir", help="Use this flag when passing in a dir path containing images D")
-	parser.add_argument("-r", help="Use this flag to specify the frame rate to convert the video to frame images",
+	flag_group.add_argument('--img', help='Use this flag when passing in an image file path I')
+	flag_group.add_argument('--vid', help='Use this flag when passing in a video file path V')
+	flag_group.add_argument('--dir', help='Use this flag when passing in a dir path containing images D')
+	parser.add_argument('-r', help='Use this flag to specify the frame rate to convert the video to frame images',
 						default=20)
-	parser.add_argument("--mask", help="Use this flag to specify the Cityscapes mask image associated with the input image", 
+	parser.add_argument('--mask', help="Use this flag to specify the Cityscapes mask image associated with the input image", 
 						default=None)
 	parser.add_argument("--ngpus", help="Use this flag to specify how many GPUs you would like the system to utilize",
 						default=1)
+	parser.add_argument("--model", help='Use this flag to specify a model to use for evaluation other than the default PSPNet',
+						default='psp')
+	parser.add_argument("--backbone", help='Use this flag to specify a backbone to use for evaluation other than the default PSPNet',
+						default='resnet50')
 	return parser.parse_args()
 
 def main():
@@ -297,18 +317,20 @@ def main():
 	Processes the arguments, reads the given image, images in the directory or the given video,
 	passes the images into the trained semantic segmentation model, and writes the output to a directory.
 	"""
-	input_args = parse_args()
-	image_path = input_args.img
-	video_path = input_args.vid
-	dir_path = input_args.dir
-	mask_path = input_args.mask
+	args = parse_args()
+	image_path = args.img
+	video_path = args.vid
+	dir_path = args.dir
+	mask_path = args.mask
+	model = args.model
+	backbone = args.backbone
 	gpus = None
 	rate = None
-	if input_args.r:
-		rate = float(input_args.r)
-	if input_args.ngpus:
-		gpus = int(input_args.ngpus)
-	process_input(img_path=image_path, dir_path=dir_path, vid_path=video_path, frame_rate=rate, mask_path=mask_path, ngpus=gpus)
+	if args.r:
+		rate = float(args.r)
+	if args.ngpus:
+		gpus = int(args.ngpus)
+	process_input(model=model, backbone=backbone, img_path=image_path, dir_path=dir_path, vid_path=video_path, frame_rate=rate, mask_path=mask_path, ngpus=gpus)
 
 if __name__ == "__main__":
 	main()
