@@ -110,7 +110,7 @@ You can perform semantic segmentation using a custom model and backbone based on
 python semantic_segmentation.py --dir ./test-folder --model [ model name ] --backbone [ backbone name ]
 
 Example using FCN23s model and ResNet101 backbone
-python semantic_segmentation.py --dir ./test-folder --model fcn32s  --backbone resnet101
+python semantic_segmentation.py --dir ./test-folder --model fcn32s --backbone resnet101
 ```
 
 ### Output Format
