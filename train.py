@@ -40,8 +40,8 @@ def parse_args():
         usage='train.py --model [ model M ] --backbone [ backbone B ] --lr [ loss rate LR ] --epochs [ epochs E ] --ngpus [ NGPUS ]'
     )
     parser.add_argument('--ngpus', help='Use this flag to specify how many GPUs you would like the system to utilize', default=1)
-    parser.add_argument('--model', help='Use this flag to specify a model to use for evaluation other than the default PSPNet', default='psp')
-    parser.add_argument('--backbone', help='Use this flag to specify a backbone to use for evaluation other than the default PSPNet', default='resnet50')
+    parser.add_argument('--model', required=True, help='Use this flag to specify a model to use for evaluation other than the default PSPNet', default='psp')
+    parser.add_argument('--backbone', required=True, help='Use this flag to specify a backbone to use for evaluation other than the default PSPNet', default='resnet50')
     parser.add_argument('--lr', help='Use this flag to specify the loss rate while training the model', default=0.0001)
     parser.add_argument('--epochs', help='Use this flag to specify the number of epochs to use for training', default=100)
 
