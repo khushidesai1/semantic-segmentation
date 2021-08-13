@@ -2,6 +2,17 @@
 
 This project leverages 2 RTX A6000 GPUs and Tramac's [awesome-semantic-segmentation-pytorch](https://github.com/Tramac/awesome-semantic-segmentation-pytorch) library to place color coded overlays onto objects given the input of an image view from a car's dashboard.
 
+The project has been containerized and can be built into a Docker image before running. Use the following steps to build and run the Docker container. In order to be able to run training and evaluation scripts, you can run the container in interactive mode.
+
+```
+# Build the container
+docker build -t semseg-image .
+
+# Run the container within the semantic-segmentation repository
+docker run --rm -it -v $PWD:/workspace semseg-image
+
+```
+
 This project has 3 main sections:
 * Semantic Segmentation Training
 * Semantic Segmentation Evaluation Script
