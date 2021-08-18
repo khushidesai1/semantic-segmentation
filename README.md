@@ -14,6 +14,7 @@ docker run --rm -it -v $PWD:/workspace semseg-image
 ```
 
 This project has 3 main sections:
+* Build and Run Docker Container
 * Semantic Segmentation Training
 * Semantic Segmentation Evaluation Script
 * Image Differential Generator
@@ -29,6 +30,17 @@ This project has 3 main sections:
 |   |   |   |-- val
 |   |   |   |-- test
 |   |   |-- gtFine
+```
+
+## Build and Run Docker Container
+**Build the Docker Image**: In order to build the container, run the following command in the semantic-segmentation directory:
+```
+docker build -t semseg-image .
+```
+
+**Run the Docker Container**: In order to support multi-GPU, the Docker container requires a setting to allow for more shared memory. The container also needs to be able to identify GPUs in the system. Use the following command to run the container:
+```
+docker run --gpus all --rm --ipc=host -it -v $PWD:/segmentation semseg-image
 ```
 
 ## Semantic Segmentation Training
