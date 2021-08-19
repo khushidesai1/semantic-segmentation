@@ -119,14 +119,14 @@ def process_input(model='psp', backbone='resnet50', img_path=None, dir_path=None
 		print("Completed reading image:", img_path)
 		
 		dest_path = join(dest_path, get_file_name(img_path) + "-seg" + get_file_extension(img_path))
-		apply_single_segmentation(img_path, dest_path, mask_path, ngpus)
+		apply_single_segmentation(model, backbone, img_path, dest_path, mask_path, ngpus)
 		
 		print("Completed segmentation evaluation. Result is saved as", dest_path)
 	if dir_path:
 		assert os.path.isdir(dir_path)
 		print("Completed reading images from directory:", dir_path)
 
-		apply_segmentation_dir(dir_path, dest_path, ngpus)
+		apply_segmentation_dir(model, backbone, dir_path, dest_path, ngpus)
 		
 		print("Completed segmentation evaluation. Result is saved in", dest_path)
 	if vid_path:
@@ -141,7 +141,7 @@ def process_input(model='psp', backbone='resnet50', img_path=None, dir_path=None
 			os.makedirs(segmented_frames_dir)
 		dest_path = join(dest_path, get_file_name(vid_path) + "-seg" + get_file_extension(vid_path))
 		
-		apply_segmentation_dir(join('../../',frames_dir), segmented_frames_dir, ngpus)
+		apply_segmentation_dir(model, backbone, join('../../',frames_dir), segmented_frames_dir, ngpus)
 		
 		frames_to_vid(segmented_frames_dir, dest_path, frame_rate)
 		print("Completed segmentation evaluation. Result is saved as", dest_path)
