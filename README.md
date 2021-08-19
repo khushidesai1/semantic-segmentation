@@ -33,6 +33,7 @@ This project has 3 main sections:
 ```
 
 ## Build and Run Docker Container
+
 **Build the Docker Image**: In order to build the container, run the following command in the semantic-segmentation directory:
 ```
 docker build -t semseg-image .
@@ -44,10 +45,12 @@ docker run --gpus all --rm --ipc=host -it -v $PWD:/segmentation semseg-image
 ```
 
 ## Semantic Segmentation Training
+
 **Set Up Training**: In order to set up the training component, run the following command.
 ```
 python setup.py
 ```
+
 ### Semantic Segmentation Model Training
 
 In order to perform semantic segmentation, the program looks for a pre-trained model within the ~/.torch/models folder
