@@ -21,21 +21,22 @@ def apply_segmentation_dir(model, backbone, dir_path, dest_path, ngpus=1):
 		The model to use to perform evaluation
 	backbone: str
 		The backbone to use to perform evaluation
-	image_paths: list of strs
-		The list of paths to the images within a certain directory
+	dir_path: str
+		The path to the directory containing the images to be segmented
 	dest_path: str
 		The path to the destination directory where the segmented images will be stored
 	ngpus: int, optional
 		The number of GPUs the user wants to utilize for evaluation
 	"""
 	os.chdir('./awesome-semantic-segmentation-pytorch/scripts')
+	if not os.path.isdir(dir_path):
+		dir_path = join('../../', dir_path)
 	dest_path = join('../../', dest_path)
 	outdir = ' --outdir ' + dest_path
 	input_folder = ' --custom-dataset ' + dir_path
 	parameters = MODEL + model + BACKBONE + backbone + DATASET + input_folder + outdir
 	if ngpus > 1:
-		os.system('export NGPUS=' + str(ngpus))
-		os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom_dataset.py' + parameters)
+		os.system('python -m torch.distributed.launch --nproc_per_node=' + str(ngpus) + '  eval_custom_dataset.py' + parameters)
 	else:
 		os.system('python eval_custom_dataset.py' + parameters)
 	os.chdir('../..')
@@ -61,22 +62,25 @@ def apply_single_segmentation(model, backbone, img_path, dest_path, mask_path=No
 		The number of GPUs the user wants to utilize for evaluation
 	"""
 	os.chdir('./awesome-semantic-segmentation-pytorch/scripts')
+	if not os.path.isfile(img_path):
+		img_path = join('../../', img_path)
 	dest_path = join('../../', dest_path)
 	img = ' --input-pic ' + img_path
 	outdir = ' --outdir ' + dest_path
-	mask = ' --input-gt ' + mask_path
 	parameters = MODEL + model + BACKBONE + backbone + DATASET + img + outdir
-	mask_parameters = MODEL + model + BACKBONE + backbone + DATASET + img + outdir + mask
 	if ngpus > 1:
-		os.system('export NGPUS=' + str(ngpus))
 		if not mask_path:
-			os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom.py' + parameters)
+			os.system('python -m torch.distributed.launch --nproc_per_node=' + str(ngpus) + ' eval_custom.py' + parameters)
 		else:
-			os.system('python -m torch.distributed.launch --nproc_per_node=$NGPUS eval_custom_metric.py' + mask_parameters)
+			mask = ' --input-gt ' + mask_path
+			mask_parameters = MODEL + model + BACKBONE + backbone + DATASET + img + outdir + mask
+			os.system('python -m torch.distributed.launch --nproc_per_node=' + str(ngpus) + ' eval_custom_metric.py' + mask_parameters)
 	else:
 		if not mask_path:
 			os.system('python eval_custom.py' + parameters)
 		else:
+			mask = ' --input-gt ' + mask_path
+			mask_parameters = MODEL + model + BACKBONE + backbone + DATASET + img + outdir + mask
 			os.system('python eval_custom_metric.py' + mask_parameters)
 	os.chdir('../..')
 					
