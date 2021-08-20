@@ -2,6 +2,8 @@
 
 This project leverages 2 RTX A6000 GPUs and Tramac's [awesome-semantic-segmentation-pytorch](https://github.com/Tramac/awesome-semantic-segmentation-pytorch) library to place color coded overlays onto objects given the input of an image view from a car's dashboard.
 
+![alt text](./assets/image.png?raw=True) ![alt text](./assets/image-seg.png?raw=True)
+
 The project leverages the Tramac segmentation repository, meaning the functionality of the repository is preserved and can be used within the ./awesome-semantic-segmentation-pytorch directory according to Tramac's README file.
 
 This project has 3 main sections:
